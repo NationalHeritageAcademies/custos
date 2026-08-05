@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ConnectionFormComponent } from './components/connection-form.component';
 import { ConnectionTreeComponent } from './components/connection-tree.component';
+import { ContextBarComponent } from './components/context-bar.component';
 import { ImportDialogComponent } from './components/import-dialog.component';
 import { EditorPaneComponent } from './components/editor-pane.component';
 import { ResultsGridComponent } from './components/results-grid.component';
@@ -22,6 +23,7 @@ import { WorkspaceStore } from './state/workspace.store';
   standalone: true,
   imports: [
     ConnectionTreeComponent,
+    ContextBarComponent,
     EditorPaneComponent,
     ResultsGridComponent,
     SafetyDialogComponent,

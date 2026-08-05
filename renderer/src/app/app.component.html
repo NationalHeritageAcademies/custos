@@ -78,18 +78,7 @@
         </span>
       </div>
 
-      <div style="height:27px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border);font:400 11.5px/1 Inter,sans-serif;color:var(--text-2)">
-        <span style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:3px;background:#2E8FD9;font:700 7px/1 Inter,sans-serif;color:#fff">AZ</span>
-        <span style="font-weight:600;color:var(--text)">sales-prod</span>
-        <span style="color:var(--border-strong)">/</span>
-        <span style="font-family:'JetBrains Mono',monospace">analytics</span>
-        <span style="color:var(--border-strong)">/</span>
-        <span style="font-family:'JetBrains Mono',monospace">dbo</span>
-        <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M2 4.5h8L6 9Z"/></svg>
-        <span style="display:inline-flex;align-items:center;gap:4px;padding:1px 6px 1px 5px;border-radius:4px;background:var(--accent-subtle);border:1px solid rgba(15,111,108,.2)"><svg width="9" height="9" viewBox="0 0 48 48" fill="var(--accent)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg><span style="font:600 9.5px/1.5 Inter,sans-serif;letter-spacing:.04em;color:var(--accent-hover)">READ-ONLY</span></span>
-        <div style="flex:1"></div>
-        <span style="font-family:'JetBrains Mono',monospace;color:var(--text-3)">TLS · session 3h 12m</span>
-      </div>
+      <app-context-bar></app-context-bar>
 
       <app-editor-pane></app-editor-pane>
 
@@ -112,7 +101,7 @@
         <span style="color:var(--border-strong)">|</span><span>{{ ws.execMs() ?? 0 }} ms</span>
         <span style="color:var(--border-strong)">|</span><span>fetched {{ ws.fetched() }} of {{ ws.rowCount() ?? 0 }}{{ ws.truncated() ? " · scroll to load" : "" }}</span>
         <div style="flex:1"></div>
-        <span>sales-prod / analytics</span>
+        <span>{{ ws.activeConnection()?.name ?? "—" }}@if (ws.activeDatabase()) { / {{ ws.activeDatabase() }} }</span>
         <span style="color:var(--border-strong)">|</span><span>Ln 6, Col 62</span>
         <span style="color:var(--border-strong)">|</span><span>UTF-8</span>
       </div>

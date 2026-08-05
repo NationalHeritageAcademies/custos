@@ -78,6 +78,10 @@ The design (`docs/design/screens/`) provides 10 screens.
   per-connection notes. A `DOMAIN` in the file maps straight to the Azure SQL
   driver's **Windows (NTLM)** auth mode. `parseDataGripSources` lives in
   `@custos/core` with 9 tests; **verified** on a real NHA `dataSources.xml`.
+- ✅ **Context breadcrumb** — bound to the active connection, database, and
+  read-only flag, plus a Live/Demo indicator (amber "Demo data" in the browser
+  preview, green "Live connection" under Electron) so it's always clear whether
+  a real database is attached. The bottom status bar binds the same.
 - 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
   states done; remaining: tree connecting/error chips, query cancel state.
 - ✅ **Connect without a database + pick one from the tree** — database is now
