@@ -50,19 +50,25 @@ Status snapshot as of the initial build. Legend: ✅ done · 🟡 partial · ⬜
 
 ## Phase 5 — Renderer screens (from the design handoff) 🟡
 
-The design (`docs/design/screens/`) provides 10 screens. Remaining to componentize
-and wire to live data:
+The design (`docs/design/screens/`) provides 10 screens.
 
+- ✅ **Main window → live data** — the sidebar tree, editor, and results grid are now
+  data-driven components backed by `WorkspaceStore`. A `DemoBackend` implements the
+  exact `CustosApi` (reusing core's `analyzeBatch`/`firstMutatingKind` for guardrails)
+  and is used when the Electron bridge is absent, so the whole loop is exercisable in a
+  browser. **Verified live:** lazy multi-level tree, run → `QueryResult` → grid (200
+  rows), read-only guard error, and destructive-confirmation dialog.
+- ✅ **Safety dialog** (1g) — implemented (`safety-dialog.component.ts`); consumes the
+  `CONFIRMATION_REQUIRED` analyses and re-runs on confirm.
+- 🟡 **Component states** (1i) — grid empty/error/loading states done; remaining:
+  connection connecting/error chips, query cancel state.
 - ⬜ **Connection form** (1e) — engine-adaptive form built from `connectionFields`,
   test-connection states, read-only toggle.
 - ⬜ **Welcome / first launch** (1f) — empty state + "New connection" CTA.
-- ⬜ **Safety dialog** (1g) — the confirm-before-unbounded-write moment; consumes
-  `ConfirmationRequiredError.analyses`.
 - ⬜ **Query history** (1h) — searchable, per connection.
-- ⬜ **Component states** (1i) — connection/query/empty/error states.
-- 🟡 **Main window → live data** — replace the representative content with real calls:
-  tree from `listDatabases/Schemas/Tables/Columns`, run via `runQuery`, grid from
-  `QueryResult`, breadcrumb/read-only badge from the active `ConnectionConfig`.
+- ⬜ **Live against a real database** — the components already call `CustosApi`; run the
+  Electron app against a local MySQL container to exercise driver → engine → IPC → UI
+  for real (the demo backend proves the UI contract; this proves the wire).
 
 ## Phase 6 — Editor & grid depth ⬜
 
