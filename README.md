@@ -58,29 +58,43 @@ The engine (`ConnectionManager`) is deliberately Electron-free and unit-tested w
 in-memory stores; drivers and credentials never touch the renderer. Full detail in
 [docs/architecture.md](docs/architecture.md).
 
-## Quickstart (development)
+## Quickstart
 
 Requires **Node 20+**. The backend uses npm workspaces; the renderer is a
-standalone Angular workspace.
+standalone Angular workspace, so it installs separately.
 
 ```bash
-# 1. Backend: install, build, and test the workspace
-npm install
-npm run build
-npm test
+# One-time install
+npm install                 # backend workspace (packages/* + main)
+npm --prefix renderer install   # Angular renderer
 
-# 2. Renderer: install and run the Angular dev server
-cd renderer
-npm install
-npm start          # ng serve on http://localhost:4200
-
-# 3. In another terminal, from the repo root, launch Electron against the dev server
-npm run build      # ensure main/ is compiled
-cd main && npm start
+# Run the app (builds backend + renderer, then launches Electron)
+npm run app
 ```
 
-To build the renderer for a packaged app: `cd renderer && npm run build` (outputs to
-`renderer/dist/custos/browser`, which the Electron main process loads in production).
+`npm run app` builds everything and opens the desktop window loading the built
+renderer from disk — no dev server needed. On first launch there are no
+connections, so you get the welcome screen: add one, or **Import from DataGrip**.
+
+### Live-reload development
+
+For UI work with hot reload, run the Angular dev server and point Electron at it:
+
+```bash
+# Terminal 1 — Angular dev server on http://localhost:4200
+npm --prefix renderer start
+
+# Terminal 2 — Electron against the dev server
+npm run build        # compile the main process
+npm run app:dev      # launches Electron with CUSTOS_DEV_SERVER_URL set
+```
+
+### Tests
+
+```bash
+npm test                                   # unit suites (no DB needed)
+npm run test:integration:mysql -w @custos/app   # live MySQL harness (see CONTRIBUTING)
+```
 
 ## Privacy
 

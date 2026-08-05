@@ -4,8 +4,14 @@ import { buildConnectionManager } from './bootstrap';
 import { registerIpc } from './ipc/register';
 import type { ConnectionManager } from './engine';
 
-/** Angular dev server URL used in development (see renderer/). */
-const DEV_SERVER_URL = process.env.CUSTOS_DEV_SERVER_URL ?? 'http://localhost:4200';
+/**
+ * Where the renderer is loaded from:
+ *  - If CUSTOS_DEV_SERVER_URL is set (e.g. http://localhost:4200), load that —
+ *    use this for live-reload development with `ng serve`.
+ *  - Otherwise load the built renderer from disk. So the simple path is:
+ *    build the renderer once, then launch — no dev server needed.
+ */
+const DEV_SERVER_URL = process.env.CUSTOS_DEV_SERVER_URL;
 
 let manager: ConnectionManager | undefined;
 
@@ -28,11 +34,13 @@ function createWindow(): void {
 
   window.once('ready-to-show', () => window.show());
 
-  if (app.isPackaged) {
-    // Renderer is built to renderer/dist/custos/browser by the Angular build.
-    void window.loadFile(path.join(__dirname, '..', '..', 'renderer', 'dist', 'custos', 'browser', 'index.html'));
-  } else {
+  if (DEV_SERVER_URL) {
     void window.loadURL(DEV_SERVER_URL);
+  } else {
+    // Angular builds the renderer to renderer/dist/custos/browser.
+    void window.loadFile(
+      path.join(__dirname, '..', '..', 'renderer', 'dist', 'custos', 'browser', 'index.html'),
+    );
   }
 }
 

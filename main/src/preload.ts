@@ -1,10 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import {
-  CUSTOS_IPC_CHANNEL,
-  type CustosApi,
-  type CustosApiMethod,
-  type IpcResult,
-} from '@custos/shared';
+import type { CustosApi, CustosApiMethod, IpcResult } from '@custos/shared';
+
+// A sandboxed preload can only `require('electron')` — it cannot require a
+// workspace package at runtime. So the channel name is inlined here rather than
+// imported as a value from @custos/shared. Keep it in sync with
+// CUSTOS_IPC_CHANNEL there (both are 'custos:invoke').
+const CUSTOS_IPC_CHANNEL = 'custos:invoke';
 
 /** Invoke a main-process method and unwrap the {@link IpcResult} envelope. */
 async function invoke<T>(method: CustosApiMethod, ...args: unknown[]): Promise<T> {

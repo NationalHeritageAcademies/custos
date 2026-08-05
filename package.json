@@ -17,7 +17,11 @@
     "typecheck": "tsc -b",
     "test": "npm run test --workspaces --if-present",
     "clean": "tsc -b --clean",
-    "rebuild": "npm run clean && npm run build"
+    "rebuild": "npm run clean && npm run build",
+    "app:renderer": "npm --prefix renderer run build",
+    "app:start": "npm --workspace @custos/app run start",
+    "app": "npm run build && npm run app:renderer && npm run app:start",
+    "app:dev": "CUSTOS_DEV_SERVER_URL=http://localhost:4200 npm run app:start"
   },
   "devDependencies": {
     "@types/mssql": "^12.3.0",
