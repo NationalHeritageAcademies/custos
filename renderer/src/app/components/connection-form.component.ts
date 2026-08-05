@@ -18,6 +18,7 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
           <div class="head">
             <svg width="16" height="16" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--accent)" stroke-width="3.4" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--accent)"/></svg>
             <span class="title">New connection</span>
+            <button class="importlink" (click)="ws.closeForm(); ws.openImport()">Import from DataGrip</button>
             <span class="esc">esc to close</span>
           </div>
 
@@ -108,7 +109,9 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
     .dialog { width: 600px; max-width: calc(100vw - 32px); max-height: calc(100vh - 48px); overflow: auto; background: var(--bg); color: var(--text); border: 1px solid var(--border-strong); border-radius: var(--radius-panel); box-shadow: var(--elev-2); }
     .head { display: flex; align-items: center; gap: 10px; padding: 16px 20px 14px; border-bottom: 1px solid var(--border); }
     .title { font: var(--text-dialog); }
-    .esc { margin-left: auto; font: 400 11px/1 var(--font-mono); color: var(--text-3); }
+    .importlink { margin-left: auto; height: 24px; padding: 0 9px; border: 1px solid var(--border-strong); border-radius: 5px; background: var(--bg); color: var(--text-2); font: 500 11px/1 var(--font-ui); cursor: pointer; }
+    .importlink:hover { background: var(--surface-2); color: var(--text); }
+    .esc { font: 400 11px/1 var(--font-mono); color: var(--text-3); }
     .body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
     .group { display: flex; flex-direction: column; gap: 7px; }
     .overline { font: var(--text-overline); letter-spacing: var(--overline-tracking); text-transform: uppercase; color: var(--text-3); }

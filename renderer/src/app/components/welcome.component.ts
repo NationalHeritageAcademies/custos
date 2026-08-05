@@ -22,6 +22,7 @@ import { WorkspaceStore } from '../state/workspace.store';
           <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 5v14M5 12h14"/></svg>
           New connection
         </button>
+        <button class="secondary" (click)="ws.openImport()">Import from DataGrip</button>
       </div>
     </div>
   `,
@@ -31,9 +32,11 @@ import { WorkspaceStore } from '../state/workspace.store';
     .name { font: var(--text-display); letter-spacing: -.025em; margin-top: 18px; }
     .tagline { font: 400 14px/1.5 var(--font-ui); color: var(--text-2); margin-top: 8px; }
     .blurb { font: 400 12.5px/1.6 var(--font-ui); color: var(--text-3); margin-top: 6px; max-width: 330px; }
-    .cta { margin-top: 24px; }
+    .cta { margin-top: 24px; display: flex; align-items: center; gap: 10px; }
     .primary { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 0; border-radius: 7px; background: var(--accent); color: var(--on-accent); font: 600 13px/1 var(--font-ui); cursor: pointer; box-shadow: var(--elev-1); }
     .primary:hover { background: var(--accent-hover); }
+    .secondary { height: 36px; padding: 0 14px; border: 1px solid var(--border-strong); border-radius: 7px; background: var(--bg); color: var(--text); font: 500 13px/1 var(--font-ui); cursor: pointer; }
+    .secondary:hover { background: var(--surface-2); }
   `],
 })
 export class WelcomeComponent {

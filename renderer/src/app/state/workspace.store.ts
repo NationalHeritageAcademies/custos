@@ -8,6 +8,11 @@ import type {
   StatementAnalysis,
   TableRef,
 } from '@custos/shared';
+import {
+  parseDataGripSources,
+  toConnectionConfig,
+  type ImportedConnection,
+} from '@custos/core';
 import { resolveBackend, isLiveBackend } from '../data/backend';
 
 export type FieldValue = string | number | boolean;
@@ -372,6 +377,48 @@ export class WorkspaceStore {
       this.testStatus.set('error');
       this.testMessage.set(err instanceof Error ? err.message : String(err));
     }
+  }
+
+  // --- DataGrip import ---
+  readonly importOpen = signal(false);
+  readonly importList = signal<ImportedConnection[]>([]);
+  readonly importError = signal<string>('');
+
+  openImport(): void {
+    this.importList.set([]);
+    this.importError.set('');
+    this.importOpen.set(true);
+  }
+
+  closeImport(): void {
+    this.importOpen.set(false);
+  }
+
+  /** Parse a pasted/loaded dataSources.xml into a preview list. */
+  parseImportXml(xml: string): void {
+    try {
+      this.importList.set(parseDataGripSources(xml));
+      this.importError.set(this.importList().length ? '' : 'No <data-source> entries found in that file.');
+    } catch (err) {
+      this.importError.set(err instanceof Error ? err.message : String(err));
+      this.importList.set([]);
+    }
+  }
+
+  /** Persist every supported imported connection; returns how many were added. */
+  async importSupported(): Promise<number> {
+    let added = 0;
+    for (const imported of this.importList()) {
+      const id = globalThis.crypto?.randomUUID?.() ?? `c${Date.now()}-${added}`;
+      const config = toConnectionConfig(imported, id);
+      if (!config) continue;
+      await this.backend.saveConnection({ config, secrets: {} });
+      this.tree.set([...this.tree(), this.connectionNode(config, false)]);
+      added++;
+    }
+    if (added > 0) this.connections.set(await this.backend.listConnections());
+    this.closeImport();
+    return added;
   }
 
   async save(): Promise<void> {

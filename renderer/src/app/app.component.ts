@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ConnectionFormComponent } from './components/connection-form.component';
 import { ConnectionTreeComponent } from './components/connection-tree.component';
+import { ImportDialogComponent } from './components/import-dialog.component';
 import { EditorPaneComponent } from './components/editor-pane.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
@@ -25,6 +26,7 @@ import { WorkspaceStore } from './state/workspace.store';
     ResultsGridComponent,
     SafetyDialogComponent,
     ConnectionFormComponent,
+    ImportDialogComponent,
     WelcomeComponent,
   ],
   templateUrl: './app.component.html',

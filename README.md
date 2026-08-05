@@ -36,6 +36,9 @@ bolted on.
   without a `WHERE`, `TRUNCATE`, and `DROP`.
 - **Schema-aware workspace** — connection tree, tabbed SQL editor, virtualized
   results grid, multiple result sets, query history.
+- **Import from DataGrip** — bring in existing connections from a JetBrains
+  `dataSources.xml` (metadata only; passwords are never in that file and go to
+  your keychain on first connect).
 - **No telemetry** — Custos makes no network calls except to the databases you
   configure. See [Privacy](#privacy).
 

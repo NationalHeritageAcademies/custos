@@ -66,6 +66,12 @@ The design (`docs/design/screens/`) provides 10 screens.
   adaptation, test success, save → new node in tree.
 - ✅ **Welcome / first launch** (1f) — empty state + "New connection" CTA
   (exercisable via `?empty`).
+- ✅ **Import from DataGrip** — parse a JetBrains `dataSources.xml` (SQL Server
+  native + jTDS, MySQL/MariaDB; others flagged) into Custos connections, minus
+  the password (DataGrip doesn't store it). Import dialog with file-picker + paste,
+  per-connection warnings (e.g. Windows-domain auth not yet supported).
+  `parseDataGripSources` lives in `@custos/core` with 9 tests; **verified** on a
+  real NHA `dataSources.xml`.
 - 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
   states done; remaining: tree connecting/error chips, query cancel state.
 - ⬜ **Query history** (1h) — searchable, per connection.
