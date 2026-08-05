@@ -21,7 +21,9 @@
     "app:renderer": "npm --prefix renderer run build",
     "app:start": "npm --workspace @custos/app run start",
     "app": "npm run build && npm run app:renderer && npm run app:start",
-    "app:dev": "CUSTOS_DEV_SERVER_URL=http://localhost:4200 npm run app:start"
+    "app:dev": "CUSTOS_DEV_SERVER_URL=http://localhost:4200 npm run app:start",
+    "web": "npm run build && npm run app:renderer && node main/dist/server.js",
+    "web:start": "node main/dist/server.js"
   },
   "devDependencies": {
     "@types/mssql": "^12.3.0",

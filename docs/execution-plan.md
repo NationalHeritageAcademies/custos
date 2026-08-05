@@ -110,17 +110,29 @@ The design (`docs/design/screens/`) provides 10 screens.
   copy-as CSV/TSV/JSON, export.
 - ⬜ Cancel button wired to `cancelQuery`; run/run-selection keyboard shortcuts.
 
-## Phase 7 — Packaging & polish ⬜
+## Phase 7 — Hosts, packaging & polish 🟡
 
-- ⬜ `electron-builder` config; signed-ready macOS/Windows/Linux artifacts.
-- ⬜ Dev orchestration script (serve renderer + launch Electron in one command).
+The engine and UI are host-agnostic; a host is a thin shell around the shared
+dispatcher (`main/src/dispatch.ts`).
+
+- ✅ **Web host** (`npm run web`) — a zero-dep Node HTTP server (`main/src/server.js`)
+  that serves the built UI and brokers real DB connections over `/api`. Runs Custos
+  in a browser with **no native binary** — the answer for managed machines that block
+  an unsigned Electron app. localhost-only; secrets in memory; metadata under
+  `~/.custos`. **Verified**: browser → HTTP → real MySQL (listed real databases, ran
+  `SELECT` on real rows, breadcrumb shows "Live connection").
+- ✅ **Electron host** — the desktop shell (blocked on some managed machines by
+  endpoint security; see below).
+- ⬜ `electron-builder` config; signed macOS/Windows/Linux artifacts (needs a signing
+  identity to clear Gatekeeper/EDR).
+- 🟡 **Secret storage for the web host** — currently in-memory; add an encrypted
+  at-rest option (OS keychain via the desktop host is already done via `safeStorage`).
 - ⬜ Bundle Inter / JetBrains Mono locally (drop the Google Fonts request) and set a
   strict `Content-Security-Policy`.
 - ⬜ App icon set from the guardian shield.
 
 ## Immediate next step
 
-Wire the **main window to live data** end-to-end against a local MySQL container:
-connection tree → run query → results grid, using the already-built `CustosClient`
-and engine. That turns the faithful shell into a working client and exercises the full
-stack (driver → engine → IPC → UI) for the first time.
+Two good directions: **query history (1h)** (last unbuilt design screen), or deepen
+the editor (Monaco + schema autocomplete, Phase 6). The web host means the app is now
+fully usable against real databases without the desktop shell.

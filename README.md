@@ -68,13 +68,24 @@ standalone Angular workspace, so it installs separately.
 npm install                 # backend workspace (packages/* + main)
 npm --prefix renderer install   # Angular renderer
 
-# Run the app (builds backend + renderer, then launches Electron)
-npm run app
+# Option A — run in the browser (no desktop app):
+npm run web            # builds, then serves http://127.0.0.1:4174
+
+# Option B — run as an Electron desktop app:
+npm run app            # builds, then opens the desktop window
 ```
 
-`npm run app` builds everything and opens the desktop window loading the built
-renderer from disk — no dev server needed. On first launch there are no
-connections, so you get the welcome screen: add one, or **Import from DataGrip**.
+**Web mode** (`npm run web`) starts a small local Node server that serves the UI
+and brokers the real database connections, then you open `http://127.0.0.1:4174`
+in your browser. No native app, no code signing — useful on managed machines
+where an unsigned desktop binary is blocked. The server binds to localhost only;
+connection metadata persists under `~/.custos`, and secrets are kept in memory
+(re-enter after a restart).
+
+**Desktop mode** (`npm run app`) loads the same UI in an Electron window.
+
+Either way, on first launch there are no connections, so you get the welcome
+screen: add one, or **Import from DataGrip**.
 
 ### Live-reload development
 
