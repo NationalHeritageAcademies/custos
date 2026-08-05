@@ -16,8 +16,10 @@ test('parses SQL Server via jTDS with a Windows domain', () => {
   assert.equal(c.params.server, 'sql-01.example.internal');
   assert.equal(c.params.port, 1433);
   assert.equal(c.params.database, 'AppAuthorization');
+  assert.equal(c.params.authMode, 'ntlm');
+  assert.equal(c.params.domain, 'CORP');
   assert.equal(c.readOnly, true);
-  assert.ok(c.warnings.some((w) => /domain auth \(CORP\)/.test(w)));
+  assert.ok(c.warnings.some((w) => /NTLM/.test(w) && /CORP/.test(w)));
 });
 
 test('parses native SQL Server url with databaseName', () => {

@@ -131,11 +131,15 @@ export function parseDataGripSources(xml: string): ImportedConnection[] {
     const { driverId, params, warnings } = parseJdbcUrl(jdbcUrl);
     if (user) params['user'] = user;
 
-    // Windows-domain / integrated auth isn't supported by the Azure SQL driver
-    // yet (it does SQL auth + Azure AD token).
+    // A Windows domain means NTLM auth — map it straight onto the Azure SQL
+    // driver's ntlm mode so the connection works after a password is added.
     const domain = property(block, 'DOMAIN') ?? property(block, 'Domain');
-    if (domain) {
-      warnings.push(`Windows domain auth (${domain}) isn't supported yet — choose SQL login or Azure AD after import.`);
+    if (domain && driverId === 'azuresql') {
+      params['authMode'] = 'ntlm';
+      params['domain'] = domain;
+      warnings.push(`Windows (NTLM) auth for domain ${domain} — add your password to connect.`);
+    } else if (domain) {
+      warnings.push(`Windows domain auth (${domain}) isn't supported for this engine.`);
     }
     if (driverId && !user && driverId !== 'azuresql') {
       warnings.push('No username in the file — set it after import.');

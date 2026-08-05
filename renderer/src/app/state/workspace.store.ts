@@ -103,7 +103,10 @@ export class WorkspaceStore {
     if (!driver || !d) return [];
     return driver.connectionFields.filter((f) => {
       if (!f.visibleWhen) return true;
-      return String(d.values[f.visibleWhen.field] ?? '') === f.visibleWhen.equals;
+      const current = String(d.values[f.visibleWhen.field] ?? '');
+      return 'in' in f.visibleWhen
+        ? f.visibleWhen.in.includes(current)
+        : current === f.visibleWhen.equals;
     });
   });
 

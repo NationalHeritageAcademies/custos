@@ -20,8 +20,9 @@ Status snapshot as of the initial build. Legend: ✅ done · 🟡 partial · ⬜
 
 - ✅ `@custos/driver-mysql` (mysql2): connect/test, schema introspection, multi-result
   batches, cancel via `KILL QUERY`.
-- ✅ `@custos/driver-azuresql` (mssql): SQL auth **and** Azure AD access-token auth,
-  schema/FK introspection, multi-recordset, cancel via `request.cancel()`.
+- ✅ `@custos/driver-azuresql` (mssql): SQL auth, **Windows/NTLM (domain)** auth, and
+  Azure AD access-token auth; schema/FK introspection, multi-recordset, cancel via
+  `request.cancel()`.
 - 🟡 **Row streaming for `maxRows`** — both drivers currently fetch then truncate.
   Switch to streaming so large results stop fetching early. (`toResultSet` already
   flags `truncated`.)
@@ -69,9 +70,9 @@ The design (`docs/design/screens/`) provides 10 screens.
 - ✅ **Import from DataGrip** — parse a JetBrains `dataSources.xml` (SQL Server
   native + jTDS, MySQL/MariaDB; others flagged) into Custos connections, minus
   the password (DataGrip doesn't store it). Import dialog with file-picker + paste,
-  per-connection warnings (e.g. Windows-domain auth not yet supported).
-  `parseDataGripSources` lives in `@custos/core` with 9 tests; **verified** on a
-  real NHA `dataSources.xml`.
+  per-connection notes. A `DOMAIN` in the file maps straight to the Azure SQL
+  driver's **Windows (NTLM)** auth mode. `parseDataGripSources` lives in
+  `@custos/core` with 9 tests; **verified** on a real NHA `dataSources.xml`.
 - 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
   states done; remaining: tree connecting/error chips, query cancel state.
 - ⬜ **Query history** (1h) — searchable, per connection.

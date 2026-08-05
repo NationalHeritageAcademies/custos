@@ -91,8 +91,14 @@ export interface ConnectionField {
   readonly help?: string;
   /** Options for `select` fields. */
   readonly options?: ConnectionFieldOption[];
-  /** Show this field only when another field currently equals a given value. */
-  readonly visibleWhen?: { readonly field: string; readonly equals: string };
+  /**
+   * Show this field only when another field currently matches. `equals` matches
+   * a single value; `in` matches any value in the list (e.g. a user field shown
+   * for both "sql" and "ntlm" auth modes).
+   */
+  readonly visibleWhen?:
+    | { readonly field: string; readonly equals: string }
+    | { readonly field: string; readonly in: readonly string[] };
 }
 
 /**

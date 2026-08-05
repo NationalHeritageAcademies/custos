@@ -47,16 +47,25 @@ const CONNECTION_FIELDS: ConnectionField[] = [
     default: 'sql',
     options: [
       { value: 'sql', label: 'SQL login' },
+      { value: 'ntlm', label: 'Windows (NTLM)' },
       { value: 'azuread-token', label: 'Azure AD access token' },
     ],
   },
-  { key: 'user', label: 'User', type: 'string', visibleWhen: { field: 'authMode', equals: 'sql' } },
+  {
+    key: 'domain',
+    label: 'Domain',
+    type: 'string',
+    placeholder: 'e.g. CORP',
+    visibleWhen: { field: 'authMode', equals: 'ntlm' },
+    help: 'Windows domain for NTLM (integrated) authentication.',
+  },
+  { key: 'user', label: 'User', type: 'string', visibleWhen: { field: 'authMode', in: ['sql', 'ntlm'] } },
   {
     key: 'password',
     label: 'Password',
     type: 'password',
     secret: true,
-    visibleWhen: { field: 'authMode', equals: 'sql' },
+    visibleWhen: { field: 'authMode', in: ['sql', 'ntlm'] },
   },
   {
     key: 'accessToken',
@@ -70,7 +79,8 @@ const CONNECTION_FIELDS: ConnectionField[] = [
   { key: 'trustServerCertificate', label: 'Trust server certificate', type: 'boolean', default: false },
 ];
 
-function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets): sql.config {
+/** Build the mssql/tedious config from a Custos connection. Exported for tests. */
+export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets): sql.config {
   const p = config.params;
   const base: sql.config = {
     server: String(p.server ?? ''),
@@ -92,6 +102,18 @@ function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets): sql.
       },
     };
   }
+
+  if (p.authMode === 'ntlm') {
+    // node-mssql (via tedious) performs NTLM / Windows-integrated auth when a
+    // `domain` is supplied alongside user + password.
+    return {
+      ...base,
+      user: p.user ? String(p.user) : undefined,
+      password: secrets.password,
+      domain: p.domain ? String(p.domain) : undefined,
+    };
+  }
+
   return { ...base, user: p.user ? String(p.user) : undefined, password: secrets.password };
 }
 
