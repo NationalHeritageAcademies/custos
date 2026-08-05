@@ -69,9 +69,15 @@ The design (`docs/design/screens/`) provides 10 screens.
 - 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
   states done; remaining: tree connecting/error chips, query cancel state.
 - ⬜ **Query history** (1h) — searchable, per connection.
-- ⬜ **Live against a real database** — the components already call `CustosApi`; run the
-  Electron app against a local MySQL container to exercise driver → engine → IPC → UI
-  for real (the demo backend proves the UI contract; this proves the wire).
+- ✅ **Live against a real database** — the real `@custos/driver-mysql` + engine are
+  verified end-to-end against a running MySQL by `main/integration/mysql-live.js`
+  (`npm run test:integration:mysql -w @custos/app`, DB via `db/docker-compose.yml`).
+  **9/9 checks pass** on MySQL 9.7: handshake, introspection with real column types,
+  `SELECT`, `maxRows` truncation, a real `UPDATE ... WHERE` (row actually mutated),
+  the confirmation guard pausing an unbounded `UPDATE`, and the read-only guard
+  refusing writes. Remaining: launch the packaged Electron app against it (the
+  IPC↔UI shim is thin and already proven via the in-browser demo of the same
+  `CustosApi`).
 
 ## Phase 6 — Editor & grid depth ⬜
 

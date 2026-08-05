@@ -104,6 +104,22 @@ Follow `packages/core/test` and `main/test` for the style: `node:test` + `node:a
 importing compiled `dist`. Prefer testing your result-normalization and metadata
 queries against a throwaway container.
 
+## Live integration test (real MySQL)
+
+The unit suites mock the DB; there is also a live harness that drives the real driver
+through the engine against an actual MySQL server:
+
+```bash
+docker compose -f db/docker-compose.yml up -d      # MySQL on 127.0.0.1:3307, seeded
+npm run build
+npm run test:integration:mysql -w @custos/app       # 9 checks against real MySQL
+docker compose -f db/docker-compose.yml down        # tear down
+```
+
+The harness (`main/integration/mysql-live.js`) reads `CUSTOS_MYSQL_*` env vars and
+defaults to the compose settings. It is intentionally not part of `npm test` so CI and
+day-to-day runs don't require a database.
+
 ## Conventions
 
 - TypeScript strict mode; no `any` in public surfaces.

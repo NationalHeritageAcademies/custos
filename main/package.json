@@ -8,6 +8,7 @@
     "build": "tsc -b",
     "pretest": "tsc -b",
     "test": "node --test",
+    "test:integration:mysql": "tsc -b && node integration/mysql-live.js",
     "start": "electron ."
   },
   "dependencies": {
