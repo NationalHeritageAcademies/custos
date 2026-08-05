@@ -1,0 +1,51 @@
+<div class="dv-olabel"><a class="dv-oid" href="#1g">1g</a>Safety dialog — the guardian moment before an unbounded write · light &amp; dark</div>
+<div class="dv-card" style="display:flex;gap:24px;background:none;border-radius:0;overflow:visible">
+<div data-panel="light" style="--bg:#FFFFFF;--sf:#F7F8FA;--sf2:#EDF0F3;--bd:#E2E6EA;--bd2:#CBD2D9;--tx:#101619;--tx2:#54626C;--tx3:#8695A0;--ac:#0F6F6C;--ach:#0B5754;--acs:#E4F1F0;--ok:#17794A;--wn:#9A6100;--dg:#B22730;--oks:#E7F3EC;--wns:#FBF1DE;--dgs:#FBEBEC;--onac:#FFFFFF;--sh:0 1px 2px rgba(16,22,25,.06),0 16px 38px rgba(16,22,25,.14);width:520px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx)">
+  <div style="padding:22px 22px 18px;display:flex;gap:14px">
+    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;background:var(--acs);border:1px solid rgba(15,111,108,.22)">
+      <svg width="20" height="20" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--ac)" stroke-width="3" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--ac)"/></svg>
+    </span>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="font:600 15px/1.35 Inter,sans-serif;letter-spacing:-.01em">This UPDATE has no WHERE clause</div>
+      <div style="font:400 12.5px/1.6 Inter,sans-serif;color:var(--tx2);text-wrap:pretty">Custos held it back so you can look twice. As written it would rewrite every row in <span style="font-family:'JetBrains Mono',monospace;color:var(--tx)">dbo.customers</span>.</div>
+      <div style="padding:10px 12px;border-radius:7px;background:var(--sf);border:1px solid var(--bd);font:400 12px/1.7 'JetBrains Mono',monospace;color:var(--tx)"><span style="color:#12626F">UPDATE</span> dbo.customers<br><span style="color:#12626F">SET</span> plan = <span style="color:#8A5300">'team'</span><span style="display:inline-block;margin-left:8px;padding:0 5px;border-radius:3px;background:var(--wns);border:1px solid rgba(154,97,0,.3);font:600 9.5px/1.6 Inter,sans-serif;letter-spacing:.04em;color:var(--wn)">NO WHERE</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font:400 12px/1.5 Inter,sans-serif;color:var(--tx2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--wn)" stroke-width="1.9"><path d="M12 4 21 19H3Z"/><path d="M12 10v4M12 16.5h.01"/></svg>Estimated <span style="font-family:'JetBrains Mono',monospace;color:var(--tx);font-weight:500">4,812,004</span> rows affected · not reversible</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+        <span style="width:14px;height:14px;border-radius:4px;border:1px solid var(--bd2);background:var(--bg)"></span>
+        <span style="font:400 12px/1.4 Inter,sans-serif;color:var(--tx2)">Skip this check for <span style="font-weight:600;color:var(--tx)">sales-prod</span> this session</span>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:13px 22px;background:var(--sf);border-top:1px solid var(--bd)">
+    <span style="display:flex;align-items:center;gap:6px;flex:none;white-space:nowrap;font:400 11px/1.4 Inter,sans-serif;color:var(--tx3)"><svg width="11" height="11" viewBox="0 0 48 48" fill="var(--tx3)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>Guarded by Custos</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:7px;height:32px;padding:0 14px;border-radius:6px;flex:none;white-space:nowrap;background:var(--bg);border:1px solid var(--bd2);font:600 12.5px/1 Inter,sans-serif;color:var(--tx);box-shadow:0 0 0 3px rgba(15,111,108,.18);outline:1px solid var(--ac);outline-offset:-1px">Add a WHERE clause<span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--tx3)">esc</span></span>
+    <span style="display:flex;align-items:center;height:32px;padding:0 13px;border-radius:6px;flex:none;white-space:nowrap;border:1px solid rgba(178,39,48,.4);background:var(--dgs);font:500 12.5px/1 Inter,sans-serif;color:var(--dg)">Run anyway</span>
+  </div>
+</div>
+<div data-panel="dark" style="--bg:#0E1417;--sf:#141B20;--sf2:#1B242A;--bd:#263136;--bd2:#37454C;--tx:#E7EEF1;--tx2:#9EABB3;--tx3:#6D7D86;--ac:#2FB5AC;--ach:#8FE3DB;--acs:#10312F;--ok:#3FBE79;--wn:#D89B3C;--dg:#E76A70;--oks:#122A1F;--wns:#2C2312;--dgs:#2E1618;--onac:#06231F;--sh:0 1px 2px rgba(0,0,0,.4),0 16px 38px rgba(0,0,0,.5);width:520px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx)">
+  <div style="padding:22px 22px 18px;display:flex;gap:14px">
+    <span style="flex:none;display:flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:9px;background:var(--acs);border:1px solid rgba(47,181,172,.22)">
+      <svg width="20" height="20" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--ac)" stroke-width="3" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--ac)"/></svg>
+    </span>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="font:600 15px/1.35 Inter,sans-serif;letter-spacing:-.01em">This UPDATE has no WHERE clause</div>
+      <div style="font:400 12.5px/1.6 Inter,sans-serif;color:var(--tx2);text-wrap:pretty">Custos held it back so you can look twice. As written it would rewrite every row in <span style="font-family:'JetBrains Mono',monospace;color:var(--tx)">dbo.customers</span>.</div>
+      <div style="padding:10px 12px;border-radius:7px;background:var(--sf);border:1px solid var(--bd);font:400 12px/1.7 'JetBrains Mono',monospace;color:var(--tx)"><span style="color:#5FD3C9">UPDATE</span> dbo.customers<br><span style="color:#5FD3C9">SET</span> plan = <span style="color:#E0B571">'team'</span><span style="display:inline-block;margin-left:8px;padding:0 5px;border-radius:3px;background:var(--wns);border:1px solid rgba(216,155,60,.3);font:600 9.5px/1.6 Inter,sans-serif;letter-spacing:.04em;color:var(--wn)">NO WHERE</span></div>
+      <div style="display:flex;align-items:center;gap:8px;font:400 12px/1.5 Inter,sans-serif;color:var(--tx2)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--wn)" stroke-width="1.9"><path d="M12 4 21 19H3Z"/><path d="M12 10v4M12 16.5h.01"/></svg>Estimated <span style="font-family:'JetBrains Mono',monospace;color:var(--tx);font-weight:500">4,812,004</span> rows affected · not reversible</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+        <span style="width:14px;height:14px;border-radius:4px;border:1px solid var(--bd2);background:var(--bg)"></span>
+        <span style="font:400 12px/1.4 Inter,sans-serif;color:var(--tx2)">Skip this check for <span style="font-weight:600;color:var(--tx)">sales-prod</span> this session</span>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:13px 22px;background:var(--sf);border-top:1px solid var(--bd)">
+    <span style="display:flex;align-items:center;gap:6px;flex:none;white-space:nowrap;font:400 11px/1.4 Inter,sans-serif;color:var(--tx3)"><svg width="11" height="11" viewBox="0 0 48 48" fill="var(--tx3)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>Guarded by Custos</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;gap:7px;height:32px;padding:0 14px;border-radius:6px;flex:none;white-space:nowrap;background:var(--bg);border:1px solid var(--bd2);font:600 12.5px/1 Inter,sans-serif;color:var(--tx);box-shadow:0 0 0 3px rgba(47,181,172,.18);outline:1px solid var(--ac);outline-offset:-1px">Add a WHERE clause<span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--tx3)">esc</span></span>
+    <span style="display:flex;align-items:center;height:32px;padding:0 13px;border-radius:6px;flex:none;white-space:nowrap;border:1px solid rgba(231,106,112,.4);background:var(--dgs);font:500 12.5px/1 Inter,sans-serif;color:var(--dg)">Run anyway</span>
+  </div>
+</div>
+</div>
+</div>
+

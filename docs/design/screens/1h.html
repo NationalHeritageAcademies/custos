@@ -1,0 +1,101 @@
+<div class="dv-olabel"><a class="dv-oid" href="#1h">1h</a>Query history — searchable, per connection · light &amp; dark</div>
+<div class="dv-card" style="display:flex;gap:24px;background:none;border-radius:0;overflow:visible">
+<div data-panel="light" style="--bg:#FFFFFF;--sf:#F7F8FA;--sf2:#EDF0F3;--bd:#E2E6EA;--bd2:#CBD2D9;--tx:#101619;--tx2:#54626C;--tx3:#8695A0;--ac:#0F6F6C;--ach:#0B5754;--acs:#E4F1F0;--ok:#17794A;--wn:#9A6100;--dg:#B22730;--oks:#E7F3EC;--wns:#FBF1DE;--dgs:#FBEBEC;--onac:#FFFFFF;--sh:0 1px 2px rgba(16,22,25,.06),0 16px 38px rgba(16,22,25,.14);width:400px;height:520px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:9px;padding:14px 14px 10px;flex:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+    <span style="font:600 13px/1 Inter,sans-serif">Query history</span>
+    <div style="flex:1"></div>
+    <span style="font:400 11px/1 Inter,sans-serif;color:var(--tx3)">sales-prod</span>
+    <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--tx3)"><path d="M2 4.5h8L6 9Z"/></svg>
+  </div>
+  <div style="padding:0 14px 12px;flex:none">
+    <span style="display:flex;align-items:center;gap:8px;height:29px;padding:0 9px;border:1px solid var(--bd2);border-radius:6px;background:var(--sf);font:400 12px/1 Inter,sans-serif;color:var(--tx)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
+      <span style="color:var(--tx)">cohort</span>
+      <div style="flex:1"></div>
+      <span style="font:400 10px/1 'JetBrains Mono',monospace;color:var(--tx3)">8 hits</span>
+    </span>
+  </div>
+  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:2px;padding:0 8px 8px">
+    <div style="padding:8px 6px 5px;font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Today</div>
+    <div style="padding:9px 10px;border-radius:7px;background:var(--acs);box-shadow:inset 2px 0 0 var(--ac);display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">WITH <span style="background:rgba(15,111,108,.18);border-radius:2px">cohort</span> AS (SELECT c.id, c.email…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>14:02</span><span style="color:var(--bd2)">·</span><span>42 ms</span><span style="color:var(--bd2)">·</span><span>1,284 rows</span><div style="flex:1"></div><span style="display:flex;align-items:center;gap:4px;padding:1px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bd);font:500 9.5px/1.6 'JetBrains Mono',monospace;color:var(--tx2)">⌘↵ rerun</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;background:var(--sf2);display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT TOP 200 * FROM dbo.orders WHERE…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:47</span><span style="color:var(--bd2)">·</span><span>118 ms</span><span style="color:var(--bd2)">·</span><span>200 rows</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">EXEC sp_help 'dbo.refunds';</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:31</span><span style="color:var(--bd2)">·</span><span>9 ms</span><span style="color:var(--bd2)">·</span><span>3 result sets</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">UPDATE dbo.customers SET plan = 'team'</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:12</span><span style="color:var(--bd2)">·</span><span style="display:flex;align-items:center;gap:4px;color:var(--ac)"><svg width="9" height="9" viewBox="0 0 48 48" fill="currentColor"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>blocked — read-only</span></span>
+    </div>
+    <div style="padding:14px 6px 5px;font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Yesterday</div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT region, SUM(mrr) FROM dbo.customers…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>18:20</span><span style="color:var(--bd2)">·</span><span>61 ms</span><span style="color:var(--bd2)">·</span><span>6 rows</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT * FROM dbo.order_items oi JOIN…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>17:58</span><span style="color:var(--bd2)">·</span><span style="color:var(--dg)">error — invalid column 'oi.sku_id'</span></span>
+    </div>
+  </div>
+  <div style="height:32px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--sf);border-top:1px solid var(--bd);font:400 10.5px/1 Inter,sans-serif;color:var(--tx3)">
+    <span>Kept locally · 30 days</span><div style="flex:1"></div><span>Clear history</span>
+  </div>
+</div>
+<div data-panel="dark" style="--bg:#0E1417;--sf:#141B20;--sf2:#1B242A;--bd:#263136;--bd2:#37454C;--tx:#E7EEF1;--tx2:#9EABB3;--tx3:#6D7D86;--ac:#2FB5AC;--ach:#8FE3DB;--acs:#10312F;--ok:#3FBE79;--wn:#D89B3C;--dg:#E76A70;--oks:#122A1F;--wns:#2C2312;--dgs:#2E1618;--onac:#06231F;--sh:0 1px 2px rgba(0,0,0,.4),0 16px 38px rgba(0,0,0,.5);width:400px;height:520px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx);display:flex;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:9px;padding:14px 14px 10px;flex:none">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ac)" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+    <span style="font:600 13px/1 Inter,sans-serif">Query history</span>
+    <div style="flex:1"></div>
+    <span style="font:400 11px/1 Inter,sans-serif;color:var(--tx3)">sales-prod</span>
+    <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--tx3)"><path d="M2 4.5h8L6 9Z"/></svg>
+  </div>
+  <div style="padding:0 14px 12px;flex:none">
+    <span style="display:flex;align-items:center;gap:8px;height:29px;padding:0 9px;border:1px solid var(--bd2);border-radius:6px;background:var(--sf);font:400 12px/1 Inter,sans-serif;color:var(--tx)">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
+      <span style="color:var(--tx)">cohort</span>
+      <div style="flex:1"></div>
+      <span style="font:400 10px/1 'JetBrains Mono',monospace;color:var(--tx3)">8 hits</span>
+    </span>
+  </div>
+  <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;gap:2px;padding:0 8px 8px">
+    <div style="padding:8px 6px 5px;font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Today</div>
+    <div style="padding:9px 10px;border-radius:7px;background:var(--acs);box-shadow:inset 2px 0 0 var(--ac);display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">WITH <span style="background:rgba(47,181,172,.18);border-radius:2px">cohort</span> AS (SELECT c.id, c.email…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>14:02</span><span style="color:var(--bd2)">·</span><span>42 ms</span><span style="color:var(--bd2)">·</span><span>1,284 rows</span><div style="flex:1"></div><span style="display:flex;align-items:center;gap:4px;padding:1px 5px;border-radius:4px;background:var(--bg);border:1px solid var(--bd);font:500 9.5px/1.6 'JetBrains Mono',monospace;color:var(--tx2)">⌘↵ rerun</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;background:var(--sf2);display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT TOP 200 * FROM dbo.orders WHERE…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:47</span><span style="color:var(--bd2)">·</span><span>118 ms</span><span style="color:var(--bd2)">·</span><span>200 rows</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">EXEC sp_help 'dbo.refunds';</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:31</span><span style="color:var(--bd2)">·</span><span>9 ms</span><span style="color:var(--bd2)">·</span><span>3 result sets</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">UPDATE dbo.customers SET plan = 'team'</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>13:12</span><span style="color:var(--bd2)">·</span><span style="display:flex;align-items:center;gap:4px;color:var(--ac)"><svg width="9" height="9" viewBox="0 0 48 48" fill="currentColor"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>blocked — read-only</span></span>
+    </div>
+    <div style="padding:14px 6px 5px;font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Yesterday</div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT region, SUM(mrr) FROM dbo.customers…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>18:20</span><span style="color:var(--bd2)">·</span><span>61 ms</span><span style="color:var(--bd2)">·</span><span>6 rows</span></span>
+    </div>
+    <div style="padding:9px 10px;border-radius:7px;display:flex;flex-direction:column;gap:5px">
+      <span style="font:400 11.5px/1.55 'JetBrains Mono',monospace;color:var(--tx)">SELECT * FROM dbo.order_items oi JOIN…</span>
+      <span style="display:flex;align-items:center;gap:8px;font:400 10.5px/1 Inter,sans-serif;color:var(--tx2)"><span>17:58</span><span style="color:var(--bd2)">·</span><span style="color:var(--dg)">error — invalid column 'oi.sku_id'</span></span>
+    </div>
+  </div>
+  <div style="height:32px;flex:none;display:flex;align-items:center;gap:8px;padding:0 14px;background:var(--sf);border-top:1px solid var(--bd);font:400 10.5px/1 Inter,sans-serif;color:var(--tx3)">
+    <span>Kept locally · 30 days</span><div style="flex:1"></div><span>Clear history</span>
+  </div>
+</div>
+</div>
+</div>
+

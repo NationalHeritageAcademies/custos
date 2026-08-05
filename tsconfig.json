@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/driver-mysql" },
+    { "path": "./packages/driver-azuresql" },
+    { "path": "./main" }
+  ]
+}

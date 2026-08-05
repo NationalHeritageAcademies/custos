@@ -1,0 +1,15 @@
+{
+  "name": "@custos/driver-azuresql",
+  "version": "0.0.0",
+  "description": "Azure SQL / SQL Server driver for Custos.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@custos/core": "*",
+    "mssql": "^11.0.1"
+  }
+}

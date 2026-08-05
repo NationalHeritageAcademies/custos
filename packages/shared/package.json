@@ -1,0 +1,14 @@
+{
+  "name": "@custos/shared",
+  "version": "0.0.0",
+  "description": "Typed IPC contract shared between the Custos main process and renderer.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@custos/core": "*"
+  }
+}

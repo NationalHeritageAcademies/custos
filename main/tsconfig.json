@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "types": ["node"]
+  },
+  "references": [
+    { "path": "../packages/core" },
+    { "path": "../packages/shared" },
+    { "path": "../packages/driver-mysql" },
+    { "path": "../packages/driver-azuresql" }
+  ],
+  "include": ["src"]
+}

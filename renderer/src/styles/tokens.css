@@ -1,0 +1,178 @@
+/**
+ * Custos design tokens — the single source of truth for color, type, spacing,
+ * radius, and elevation, for BOTH light and dark themes.
+ *
+ * Values are taken verbatim from the Claude Design handoff (screen 1a,
+ * "Design tokens — light & dark side by side"). Every component, Angular
+ * Material, Monaco, and the results grid read from these variables and never
+ * hardcode a hex, so the whole app themes from one place.
+ *
+ * Theme resolution:
+ *   - `:root` holds the light theme (the default).
+ *   - The OS dark preference applies dark automatically UNLESS the user forced
+ *     light (`data-theme="light"` on <html>).
+ *   - `data-theme="dark"|"light"` (set by ThemeService) always wins.
+ */
+
+:root {
+  /* Surfaces */
+  --bg: #ffffff;
+  --surface: #f7f8fa;
+  --surface-2: #edf0f3;
+
+  /* Lines */
+  --border: #e2e6ea;
+  --border-strong: #cbd2d9;
+
+  /* Text */
+  --text: #101619;
+  --text-2: #54626c;
+  --text-3: #8695a0;
+
+  /* Brand — deep teal guardian accent */
+  --accent: #0f6f6c;
+  --accent-hover: #0b5754;
+  --accent-subtle: #e4f1f0;
+  --on-accent: #ffffff;
+
+  /* Semantic */
+  --success: #17794a;
+  --warning: #9a6100;
+  --danger: #b22730;
+  --danger-subtle: #fbebec;
+  --warning-subtle: #fbf1de;
+
+  /* Syntax highlighting (Monaco theme references these) */
+  --syn-keyword: #12626f;
+  --syn-string: #8a5300;
+  --syn-number: #1d5fa8;
+  --syn-function: #6b3fa0;
+  --syn-comment: #8695a0;
+
+  /* Data grid */
+  --grid-header-bg: #edf0f3;
+  --grid-row: #ffffff;
+  --grid-row-alt: #f7f8fa;
+  --grid-null: #8695a0;
+  --grid-selection: #e4f1f0;
+
+  color-scheme: light;
+}
+
+:root,
+:root[data-theme='light'] {
+  /* Typography */
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', ui-monospace, 'Cascadia Code', monospace;
+
+  --text-display: 700 28px/1.15 var(--font-ui);
+  --text-section: 600 20px/1.25 var(--font-ui);
+  --text-dialog: 600 14px/1.35 var(--font-ui);
+  --text-body: 400 13px/1.5 var(--font-ui);
+  --text-meta: 400 12px/1.5 var(--font-ui);
+  --text-overline: 600 10.5px/1 var(--font-ui);
+  --overline-tracking: 0.09em;
+
+  /* Spacing (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /* Radius */
+  --radius-chip: 4px;
+  --radius-input: 6px;
+  --radius-panel: 10px;
+
+  /* Elevation */
+  --elev-1: 0 1px 2px rgba(16, 22, 25, 0.08);
+  --elev-2: 0 1px 2px rgba(16, 22, 25, 0.06), 0 14px 34px rgba(16, 22, 25, 0.12);
+}
+
+/* Dark values shared by "OS dark and not forced light" + "explicitly dark". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0e1417;
+    --surface: #141b20;
+    --surface-2: #1b242a;
+
+    --border: #263136;
+    --border-strong: #37454c;
+
+    --text: #e7eef1;
+    --text-2: #9eabb3;
+    --text-3: #6d7d86;
+
+    --accent: #2fb5ac;
+    --accent-hover: #4accc3;
+    --accent-subtle: #10312f;
+    --on-accent: #06231f;
+
+    --success: #3fbe79;
+    --warning: #d89b3c;
+    --danger: #e76a70;
+    --danger-subtle: #2e1618;
+    --warning-subtle: #2c2312;
+
+    --syn-keyword: #5fd3c9;
+    --syn-string: #e0b571;
+    --syn-number: #8ab6f0;
+    --syn-function: #c4a6f0;
+    --syn-comment: #6d7d86;
+
+    --grid-header-bg: #1b242a;
+    --grid-row: #141b20;
+    --grid-row-alt: #1b242a;
+    --grid-null: #6d7d86;
+    --grid-selection: #10312f;
+
+    /* Dark swaps elevation shadow for a lifted fill + strong hairline. */
+    --elev-1: 0 0 0 1px var(--border-strong);
+    --elev-2: 0 0 0 1px var(--border-strong), 0 18px 40px rgba(0, 0, 0, 0.55);
+
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1417;
+  --surface: #141b20;
+  --surface-2: #1b242a;
+
+  --border: #263136;
+  --border-strong: #37454c;
+
+  --text: #e7eef1;
+  --text-2: #9eabb3;
+  --text-3: #6d7d86;
+
+  --accent: #2fb5ac;
+  --accent-hover: #4accc3;
+  --accent-subtle: #10312f;
+  --on-accent: #06231f;
+
+  --success: #3fbe79;
+  --warning: #d89b3c;
+  --danger: #e76a70;
+  --danger-subtle: #2e1618;
+  --warning-subtle: #2c2312;
+
+  --syn-keyword: #5fd3c9;
+  --syn-string: #e0b571;
+  --syn-number: #8ab6f0;
+  --syn-function: #c4a6f0;
+  --syn-comment: #6d7d86;
+
+  --grid-header-bg: #1b242a;
+  --grid-row: #141b20;
+  --grid-row-alt: #1b242a;
+  --grid-null: #6d7d86;
+  --grid-selection: #10312f;
+
+  --elev-1: 0 0 0 1px var(--border-strong);
+  --elev-2: 0 0 0 1px var(--border-strong), 0 18px 40px rgba(0, 0, 0, 0.55);
+
+  color-scheme: dark;
+}

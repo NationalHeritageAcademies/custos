@@ -1,0 +1,247 @@
+<div class="custos-window">
+
+  <div style="height:38px;flex:none;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border)">
+    <div style="display:flex;gap:7px"><span style="width:11px;height:11px;border-radius:50%;background:#F0665A"></span><span style="width:11px;height:11px;border-radius:50%;background:#F2BE4E"></span><span style="width:11px;height:11px;border-radius:50%;background:#5AC45A"></span></div>
+    <div style="display:flex;align-items:center;gap:7px;margin-left:6px">
+      <svg width="15" height="15" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--accent)" stroke-width="3.4" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--accent)"/></svg>
+      <span style="font:600 12.5px/1 Inter,sans-serif;letter-spacing:-.01em;color:var(--text)">Custos</span>
+    </div>
+    <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:2px;padding:2px;background:var(--surface-2);border:1px solid var(--border);border-radius:7px">
+      <span style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;background:var(--bg);box-shadow:0 1px 1px rgba(16,22,25,.08);font:600 11px/1.4 Inter,sans-serif;color:var(--text)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5 19 19M19 5l-1.5 1.5M6.5 17.5 5 19"/></svg><a class="tg" (click)="theme.setMode('light')">Light</a></span>
+      <span style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font:500 11px/1.4 Inter,sans-serif;color:var(--text-2)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4 8.5 8.5 0 1 0 20 14.5Z"/></svg><a class="tg" (click)="theme.setMode('dark')">Dark</a></span>
+      <span style="display:flex;align-items:center;gap:5px;padding:3px 9px;border-radius:5px;font:500 11px/1.4 Inter,sans-serif;color:var(--text-2)"><a class="tg" (click)="theme.setMode('system')">System</a></span>
+    </div>
+    <span style="display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:5px;color:var(--text-2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 3 13.6H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.7 7l-.1-.1a2 2 0 1 1 2.8-2.8L7.5 4a1.7 1.7 0 0 0 1.9.3H9.5A1.7 1.7 0 0 0 10.6 3V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0 1.2 2.9H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>
+  </div>
+
+  <div style="flex:1;display:flex;min-height:0">
+
+    <div style="width:268px;flex:none;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 12px 8px">
+        <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)">Connections</span>
+        <span style="display:flex;align-items:center;gap:4px;padding:2px 7px 2px 5px;border-radius:5px;border:1px solid var(--border-strong);background:var(--bg);font:500 10.5px/1.5 Inter,sans-serif;color:var(--text-2)"><svg width="10" height="10" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 5v14M5 12h14"/></svg>New</span>
+      </div>
+      <div style="padding:0 10px 10px">
+        <div style="display:flex;align-items:center;gap:7px;height:27px;padding:0 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 0 0 3px rgba(15,111,108,.14);outline:1px solid var(--accent);outline-offset:-1px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
+          <span style="flex:1;font:400 12px/1 Inter,sans-serif;color:var(--text)">cust<span style="display:inline-block;width:1px;height:12px;background:var(--accent);vertical-align:-2px;margin-left:1px"></span></span>
+          <span style="font:500 9.5px/1 'JetBrains Mono',monospace;color:var(--text-3);padding:2px 4px;border:1px solid var(--border);border-radius:3px">⌘P</span>
+        </div>
+      </div>
+
+      <div style="flex:1;overflow:hidden;padding:0 6px 8px;display:flex;flex-direction:column;gap:1px;font:400 12.5px/1 Inter,sans-serif">
+        <div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px;background:var(--surface-2)">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M2 3.5h8L6 9Z"/></svg>
+          <span style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:#2E8FD9;font:700 8px/1 Inter,sans-serif;color:#fff">AZ</span>
+          <span style="font-weight:600;color:var(--text)">sales-prod</span>
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>
+          <div style="flex:1"></div>
+          <span style="display:inline-flex;align-items:center;gap:3px;padding:1px 5px 1px 4px;border-radius:4px;background:var(--accent-subtle);border:1px solid rgba(15,111,108,.2)"><svg width="9" height="9" viewBox="0 0 48 48" fill="var(--accent)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg><span style="font:600 9px/1.4 Inter,sans-serif;letter-spacing:.04em;color:var(--accent-hover)">RO</span></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 24px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M2 3.5h8L6 9Z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>
+          <span style="color:var(--text)">analytics</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 42px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M2 3.5h8L6 9Z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.7"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h4l2 2.5h7A2 2 0 0 1 20.5 9.5v8A2 2 0 0 1 18.5 19.5h-13A2.5 2.5 0 0 1 3 17Z"/></svg>
+          <span style="color:var(--text)">dbo</span>
+          <span style="font:400 11px/1 Inter,sans-serif;color:var(--text-3)">schema</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 60px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M2 3.5h8L6 9Z"/></svg>
+          <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)">Tables</span>
+          <span style="font:400 11px/1 'JetBrains Mono',monospace;color:var(--text-3)">14</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;height:26px;padding:0 8px 0 78px;border-radius:6px;background:var(--accent-subtle);box-shadow:inset 2px 0 0 var(--accent)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10"/></svg>
+          <span style="font-weight:600;color:var(--accent-hover)">customers</span>
+          <div style="flex:1"></div>
+          <span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:var(--accent-hover)">1.2M</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;height:26px;padding:0 8px 0 78px;border-radius:6px;background:var(--surface-2)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10"/></svg>
+          <span style="color:var(--text)">orders</span>
+          <div style="flex:1"></div>
+          <span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:var(--text-3)">4.8M</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;height:26px;padding:0 8px 0 78px;border-radius:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10"/></svg>
+          <span style="color:var(--text)">order_items</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;height:26px;padding:0 8px 0 78px;border-radius:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.8"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M9 9.5v10"/></svg>
+          <span style="color:var(--text)">refunds</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 60px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M4 2v8l5-4Z"/></svg>
+          <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)">Views</span>
+          <span style="font:400 11px/1 'JetBrains Mono',monospace;color:var(--text-3)">3</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 24px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M4 2v8l5-4Z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>
+          <span style="color:var(--text)">reporting</span>
+        </div>
+
+        <div style="height:9px"></div>
+        <div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M2 3.5h8L6 9Z"/></svg>
+          <span style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:#C98A2E;font:700 8px/1 Inter,sans-serif;color:#fff">MY</span>
+          <span style="font-weight:600;color:var(--text)">shop-mysql</span>
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--success)"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:26px;padding:0 8px 0 24px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M4 2v8l5-4Z"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>
+          <span style="color:var(--text)">shopdb</span>
+          <span style="font:400 11px/1 'JetBrains Mono',monospace;color:var(--text-3)">23 tables</span>
+        </div>
+
+        <div style="height:9px"></div>
+        <div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M4 2v8l5-4Z"/></svg>
+          <span style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:#2E8FD9;font:700 8px/1 Inter,sans-serif;color:#fff">AZ</span>
+          <span style="color:var(--text-2)">warehouse-eu</span>
+          <span style="width:7px;height:7px;border-radius:50%;border:1.5px solid var(--warning);border-top-color:transparent"></span>
+          <span style="font:400 11px/1 Inter,sans-serif;color:var(--warning)">connecting…</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px">
+          <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M4 2v8l5-4Z"/></svg>
+          <span style="display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:4px;background:#C98A2E;font:700 8px/1 Inter,sans-serif;color:#fff">MY</span>
+          <span style="color:var(--text-2)">legacy-billing</span>
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--danger)"></span>
+          <span style="font:400 11px/1 Inter,sans-serif;color:var(--danger)">auth failed</span>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;height:32px;flex:none;padding:0 12px;border-top:1px solid var(--border);font:400 11px/1 Inter,sans-serif;color:var(--text-3)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></svg>
+        <span>4 connections · 2 active</span>
+      </div>
+    </div>
+
+    <div style="width:4px;flex:none;background:var(--border);position:relative"><span style="position:absolute;left:1px;top:50%;width:2px;height:26px;border-radius:2px;background:var(--border-strong);transform:translateY(-50%)"></span></div>
+
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+      <div style="height:36px;flex:none;display:flex;align-items:stretch;background:var(--surface);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--bg);border-right:1px solid var(--border);box-shadow:inset 0 2px 0 var(--accent);font:500 12px/1 Inter,sans-serif;color:var(--text)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><path d="M6.5 3.5h7l5 5v12h-12Z"/><path d="M13 3.5v5h5"/></svg>
+          <span>churn_cohorts.sql</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" stroke="var(--text-3)" stroke-width="2.2" fill="none"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-right:1px solid var(--border);font:400 12px/1 Inter,sans-serif;color:var(--text-2)">
+          <span>orders_by_region.sql</span>
+          <span style="width:5px;height:5px;border-radius:50%;background:var(--warning)"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-right:1px solid var(--border);font:400 12px/1 Inter,sans-serif;color:var(--text-2);background:var(--surface-2)">
+          <span>scratch 3</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;width:32px;color:var(--text-3)"><svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 5v14M5 12h14"/></svg></div>
+      </div>
+
+      <div style="height:42px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border)">
+        <span style="display:flex;align-items:center;gap:7px;height:27px;padding:0 11px;border-radius:6px;background:var(--accent);color:var(--on-accent);font:600 12px/1 Inter,sans-serif;box-shadow:0 1px 1px rgba(11,79,78,.25)">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5 10 6l-7 4.5Z"/></svg>Run
+          <span style="font:500 10px/1 'JetBrains Mono',monospace;opacity:.72">⌘↵</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:7px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border-strong);background:var(--bg);font:500 12px/1 Inter,sans-serif;color:var(--text)">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M3 1.5 10 6l-7 4.5Z"/></svg>Run selection
+          <span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--text-3)">⇧⌘↵</span>
+        </span>
+        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border);font:500 12px/1 Inter,sans-serif;color:var(--text-3);opacity:.55">
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg>Cancel
+        </span>
+        <span style="width:1px;height:20px;background:var(--border);margin:0 4px"></span>
+        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;font:500 12px/1 Inter,sans-serif;color:var(--text-2)">Format</span>
+        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;font:500 12px/1 Inter,sans-serif;color:var(--text-2)">Explain plan</span>
+        <div style="flex:1"></div>
+        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font:500 11.5px/1 Inter,sans-serif;color:var(--text-2)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>History
+        </span>
+      </div>
+
+      <div style="height:27px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--surface);border-bottom:1px solid var(--border);font:400 11.5px/1 Inter,sans-serif;color:var(--text-2)">
+        <span style="display:flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:3px;background:#2E8FD9;font:700 7px/1 Inter,sans-serif;color:#fff">AZ</span>
+        <span style="font-weight:600;color:var(--text)">sales-prod</span>
+        <span style="color:var(--border-strong)">/</span>
+        <span style="font-family:'JetBrains Mono',monospace">analytics</span>
+        <span style="color:var(--border-strong)">/</span>
+        <span style="font-family:'JetBrains Mono',monospace">dbo</span>
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="var(--text-3)"><path d="M2 4.5h8L6 9Z"/></svg>
+        <span style="display:inline-flex;align-items:center;gap:4px;padding:1px 6px 1px 5px;border-radius:4px;background:var(--accent-subtle);border:1px solid rgba(15,111,108,.2)"><svg width="9" height="9" viewBox="0 0 48 48" fill="var(--accent)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg><span style="font:600 9.5px/1.5 Inter,sans-serif;letter-spacing:.04em;color:var(--accent-hover)">READ-ONLY</span></span>
+        <div style="flex:1"></div>
+        <span style="font-family:'JetBrains Mono',monospace;color:var(--text-3)">TLS · session 3h 12m</span>
+      </div>
+
+      <div style="height:222px;flex:none;display:flex;background:var(--bg);border-bottom:1px solid var(--border);overflow:hidden">
+        <div style="width:44px;flex:none;padding:10px 0;text-align:right;font:400 12px/1.85 'JetBrains Mono',monospace;color:var(--text-3);background:var(--bg);border-right:1px solid var(--border)">
+          <div style="padding-right:10px">1</div><div style="padding-right:10px">2</div><div style="padding-right:10px">3</div><div style="padding-right:10px">4</div><div style="padding-right:10px">5</div><div style="padding-right:10px;color:var(--accent);font-weight:700">6</div><div style="padding-right:10px">7</div><div style="padding-right:10px">8</div><div style="padding-right:10px">9</div>
+        </div>
+        <div style="flex:1;padding:10px 0 10px 14px;font:400 12.5px/1.85 'JetBrains Mono',monospace;white-space:pre;color:var(--text)"><div><span style="color:var(--syn-comment)">-- churn cohorts, last 6 months</span></div><div><span style="color:var(--syn-keyword)">WITH</span> cohort <span style="color:var(--syn-keyword)">AS</span> (</div><div>  <span style="color:var(--syn-keyword)">SELECT</span> c.id, c.email, c.plan, c.mrr, c.region,</div><div>         <span style="color:var(--syn-function)">DATEFROMPARTS</span>(<span style="color:var(--syn-function)">YEAR</span>(c.created_at), <span style="color:var(--syn-function)">MONTH</span>(c.created_at), <span style="color:var(--syn-number)">1</span>) <span style="color:var(--syn-keyword)">AS</span> cohort_month</div><div>  <span style="color:var(--syn-keyword)">FROM</span> dbo.customers c</div><div style="background:rgba(15,111,108,.10);margin-left:-14px;padding-left:14px;box-shadow:inset 2px 0 0 var(--accent)">  <span style="color:var(--syn-keyword)">WHERE</span> c.created_at &gt;= <span style="color:var(--syn-function)">DATEADD</span>(<span style="color:var(--syn-keyword)">MONTH</span>, <span style="color:var(--syn-number)">-6</span>, <span style="color:var(--syn-function)">SYSUTCDATETIME</span>())<span style="display:inline-block;width:1.5px;height:14px;background:var(--accent);vertical-align:-3px"></span></div><div>)</div><div><span style="color:var(--syn-keyword)">SELECT</span> * <span style="color:var(--syn-keyword)">FROM</span> cohort</div><div><span style="color:var(--syn-keyword)">ORDER BY</span> cohort_month <span style="color:var(--syn-keyword)">DESC</span>, mrr <span style="color:var(--syn-keyword)">DESC</span>;</div></div>
+      </div>
+
+      <div style="height:5px;flex:none;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center"><span style="width:26px;height:2px;border-radius:2px;background:var(--border-strong)"></span></div>
+
+      <div style="height:30px;flex:none;display:flex;align-items:stretch;background:var(--surface);border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;gap:7px;padding:0 12px;background:var(--bg);border-right:1px solid var(--border);box-shadow:inset 0 -2px 0 var(--accent);font:600 11.5px/1 Inter,sans-serif;color:var(--text)">Result 1 <span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:var(--text-3)">1,284</span></div>
+        <div style="display:flex;align-items:center;gap:7px;padding:0 12px;border-right:1px solid var(--border);font:400 11.5px/1 Inter,sans-serif;color:var(--text-2)">Result 2 <span style="font:400 10.5px/1 'JetBrains Mono',monospace;color:var(--text-3)">12</span></div>
+        <div style="display:flex;align-items:center;gap:7px;padding:0 12px;border-right:1px solid var(--border);font:400 11.5px/1 Inter,sans-serif;color:var(--text-2)">Messages</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;align-items:center;gap:14px;padding:0 12px;font:400 11px/1 Inter,sans-serif;color:var(--text-2)">
+          <span style="display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filter</span>
+          <span style="display:flex;align-items:center;gap:5px"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 11l5 5 5-5M4 20h16"/></svg>Export CSV</span>
+        </div>
+      </div>
+
+      <div style="flex:1;min-height:0;display:flex;flex-direction:column;background:var(--bg);overflow:hidden">
+        <div style="display:grid;grid-template-columns:44px 74px 236px 108px 92px 96px 176px 1fr;flex:none;background:var(--surface);border-bottom:1px solid var(--border-strong);font:600 11px/1 Inter,sans-serif;color:var(--text-2)">
+          <div style="padding:8px 8px;text-align:right;border-right:1px solid var(--border);color:var(--text-3)">#</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border);display:flex;align-items:center;gap:5px">id</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border)">email</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border)">plan</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border);text-align:right">mrr</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border)">region</div>
+          <div style="padding:8px 10px;border-right:1px solid var(--border);display:flex;align-items:center;gap:5px;color:var(--accent)">cohort_month <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor"><path d="M2 7.5h8L6 3Z"/></svg></div>
+          <div style="padding:8px 10px">churned_at</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:44px 74px 236px 108px 92px 96px 176px 1fr;font:400 12px/1 'JetBrains Mono',monospace;color:var(--text)">
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)">1</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">10241</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">avery.chen&#64;northwind.io</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">business</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)">1,240.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">eu-west</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-07-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)"><span style="font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--text-3);padding:1px 5px;border:1px dashed var(--border-strong);border-radius:3px;background:var(--surface)">NULL</span></div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">2</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">10238</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">m.okafor&#64;brightloom.com</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">team</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface)">480.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">us-east</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-07-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-07-28</div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--on-accent);border-right:1px solid rgba(255,255,255,.2);border-bottom:1px solid var(--border);background:var(--accent)">3</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">10233</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent);outline:1.5px solid var(--on-accent);outline-offset:-2px">s.reyes&#64;kellerworks.dev</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">team</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">480.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">ap-south</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">2026-06-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--accent);color:var(--on-accent)">2026-07-14</div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">4</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">10229</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">dana&#64;fernpath.co</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">solo</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface)">39.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">eu-north</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-06-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)"><span style="font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--text-3);padding:1px 5px;border:1px dashed var(--border-strong);border-radius:3px;background:var(--bg)">NULL</span></div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)">5</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">10221</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">ops&#64;havenlabs.net</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">business</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)">2,150.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">us-west</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-05-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)"><span style="font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--text-3);padding:1px 5px;border:1px dashed var(--border-strong);border-radius:3px;background:var(--surface)">NULL</span></div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">6</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">10218</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">t.vasquez&#64;orbitmail.com</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">solo</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface)">39.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">eu-west</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-05-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-06-02</div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)">7</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">10214</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">hello&#64;studiomarrow.com</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">team</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)">480.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">us-east</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-04-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-05-19</div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">8</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">10209</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">finance&#64;quaylink.io</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">business</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface)">1,890.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">ap-south</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-04-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)"><span style="font:500 10.5px/1 'JetBrains Mono',monospace;letter-spacing:.04em;color:var(--text-3);padding:1px 5px;border:1px dashed var(--border-strong);border-radius:3px;background:var(--bg)">NULL</span></div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border)">9</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">10203</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">amir.haddad&#64;lumenary.co</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">solo</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border)">39.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">eu-north</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-03-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border)">2026-04-08</div>
+
+          <div style="padding:7px 8px;text-align:right;color:var(--text-3);border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface)">10</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">10197</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">team&#64;pinewick.dev</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">team</div><div style="padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);background:var(--surface)">480.00</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">us-west</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-03-01</div><div style="padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface)">2026-03-30</div>
+        </div>
+        <div style="flex:1;background:var(--bg)"></div>
+      </div>
+
+      <div style="height:30px;flex:none;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--surface);border-top:1px solid var(--border);font:400 11px/1 'JetBrains Mono',monospace;color:var(--text-2)">
+        <span style="display:flex;align-items:center;gap:6px;color:var(--success)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 13 4 4 10-10"/></svg>1,284 rows</span>
+        <span style="color:var(--border-strong)">|</span><span>42 ms</span>
+        <span style="color:var(--border-strong)">|</span><span>fetched 200 of 1,284 · scroll to load</span>
+        <div style="flex:1"></div>
+        <span>sales-prod / analytics</span>
+        <span style="color:var(--border-strong)">|</span><span>Ln 6, Col 62</span>
+        <span style="color:var(--border-strong)">|</span><span>UTF-8</span>
+      </div>
+    </div>
+  </div>
+</div>

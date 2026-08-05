@@ -1,0 +1,32 @@
+/* Global base. Design tokens are loaded separately via styles/tokens.css. */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: var(--text-body);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Custos is a desktop app: suppress the browser's text selection/drag chrome
+   except where content is genuinely selectable (results grid, editor). */
+:root {
+  user-select: none;
+}
+input,
+textarea,
+[contenteditable],
+.selectable {
+  user-select: text;
+}

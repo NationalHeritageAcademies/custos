@@ -1,0 +1,159 @@
+<div class="dv-olabel"><a class="dv-oid" href="#1e">1e</a>New / edit connection — engine-adaptive form, test states, read-only toggle · light &amp; dark</div>
+<div class="dv-card" style="display:flex;gap:24px;background:none;border-radius:0;overflow:visible">
+<div data-panel="light" style="--bg:#FFFFFF;--sf:#F7F8FA;--sf2:#EDF0F3;--bd:#E2E6EA;--bd2:#CBD2D9;--tx:#101619;--tx2:#54626C;--tx3:#8695A0;--ac:#0F6F6C;--ach:#0B5754;--acs:#E4F1F0;--ok:#17794A;--wn:#9A6100;--dg:#B22730;--oks:#E7F3EC;--wns:#FBF1DE;--dgs:#FBEBEC;--onac:#FFFFFF;--sh:0 1px 2px rgba(16,22,25,.06),0 16px 38px rgba(16,22,25,.14);width:600px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx)">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 20px 14px;border-bottom:1px solid var(--bd)">
+    <svg width="16" height="16" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--ac)" stroke-width="3.4" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--ac)"/></svg>
+    <span style="font:600 14px/1.3 Inter,sans-serif">New connection</span>
+    <div style="flex:1"></div>
+    <span style="font:400 11px/1 'JetBrains Mono',monospace;color:var(--tx3)">esc to close</span>
+  </div>
+  <div style="padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Engine</span>
+      <div style="display:flex;gap:10px">
+        <span style="flex:1;display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--ac);background:var(--acs)">
+          <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#2E8FD9;font:700 9px/1 Inter,sans-serif;color:#fff">AZ</span>
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font:600 12.5px/1 Inter,sans-serif;color:var(--ach)">Azure SQL</span><span style="font:400 10.5px/1.3 Inter,sans-serif;color:var(--tx2)">TDS 1.4 · encrypted</span></span>
+        </span>
+        <span style="flex:1;display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;border:1px solid var(--bd2);background:var(--bg)">
+          <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#C98A2E;font:700 9px/1 Inter,sans-serif;color:#fff">MY</span>
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font:600 12.5px/1 Inter,sans-serif;color:var(--tx)">MySQL</span><span style="font:400 10.5px/1.3 Inter,sans-serif;color:var(--tx2)">8.x · 5.7</span></span>
+        </span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 108px;gap:12px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Host</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">sales-prod.database.windows.net</span></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Port</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">1433</span></label>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Database</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">analytics</span></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Display name</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);box-shadow:0 0 0 3px rgba(15,111,108,.14);outline:1px solid var(--ac);outline-offset:-1px;font:400 12.5px/1 Inter,sans-serif;color:var(--tx)">sales-prod<span style="display:inline-block;width:1.5px;height:14px;background:var(--ac);margin-left:1px"></span></span></label>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Authentication</span>
+      <span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--sf2);font:400 12.5px/1 Inter,sans-serif;color:var(--tx)">Azure AD — access token<div style="flex:1"></div><svg width="10" height="10" viewBox="0 0 12 12" fill="var(--tx2)"><path d="M2 4.5h8L6 9Z"/></svg></span>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:8px;background:var(--sf);border:1px solid var(--bd)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.8" style="margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+        <span style="font:400 11.5px/1.5 Inter,sans-serif;color:var(--tx2)">Custos requests a token from your signed-in Azure identity at connect time. Nothing is stored on disk — SQL auth credentials, when used, go to the OS keychain.</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:11px;padding:12px 13px;border-radius:8px;background:var(--acs);border:1px solid rgba(15,111,108,.22)">
+      <span style="flex:none;width:34px;height:20px;border-radius:10px;background:var(--ac);display:flex;align-items:center;justify-content:flex-end;padding:0 2px;box-sizing:border-box;margin-top:1px"><span style="width:16px;height:16px;border-radius:50%;background:#fff"></span></span>
+      <span style="display:flex;flex-direction:column;gap:3px">
+        <span style="display:flex;align-items:center;gap:6px;font:600 12.5px/1.2 Inter,sans-serif;color:var(--ach)">Read-only connection
+          <svg width="11" height="11" viewBox="0 0 48 48" fill="var(--ac)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>
+        </span>
+        <span style="font:400 11.5px/1.5 Inter,sans-serif;color:var(--tx2)">Blocks <span style="font-family:'JetBrains Mono',monospace">INSERT</span>, <span style="font-family:'JetBrains Mono',monospace">UPDATE</span>, <span style="font-family:'JetBrains Mono',monospace">DELETE</span>, <span style="font-family:'JetBrains Mono',monospace">DROP</span> and DDL before they leave your machine, and opens the session with <span style="font-family:'JetBrains Mono',monospace">READ ONLY</span> intent. You can still run <span style="font-family:'JetBrains Mono',monospace">SELECT</span> and explain plans.</span>
+      </span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;background:var(--oks);border:1px solid rgba(23,121,74,.28)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.6"><path d="m5 13 4 4 10-10"/></svg>
+      <span style="font:500 12px/1.4 Inter,sans-serif;color:var(--ok)">Connected in 340 ms · SQL Server 2022 (16.0.1000) · 14 tables visible</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:13px 20px;background:var(--sf);border-top:1px solid var(--bd)">
+    <span style="display:flex;align-items:center;gap:7px;height:31px;padding:0 12px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg);font:500 12.5px/1 Inter,sans-serif;color:var(--tx)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 12a8 8 0 1 1 3 6.2"/><path d="M4 19v-5h5"/></svg>Test connection</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;height:31px;padding:0 13px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg);font:500 12.5px/1 Inter,sans-serif;color:var(--tx2)">Cancel</span>
+    <span style="display:flex;align-items:center;gap:7px;height:31px;padding:0 14px;border-radius:6px;background:var(--ac);color:var(--onac);font:600 12.5px/1 Inter,sans-serif;box-shadow:0 1px 1px rgba(11,79,78,.25),0 0 0 3px rgba(15,111,108,.18)">Save &amp; connect<span style="font:500 10px/1 'JetBrains Mono',monospace;opacity:.72">⌘S</span></span>
+  </div>
+  <div style="padding:14px 20px 18px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:9px">
+    <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Other test states</span>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--sf);border:1px solid var(--bd)">
+      <span style="width:13px;height:13px;border-radius:50%;border:2px solid var(--tx3);border-top-color:transparent"></span>
+      <span style="font:500 12px/1.4 Inter,sans-serif;color:var(--tx2)">Testing… handshake with sales-prod.database.windows.net</span>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--dgs);border:1px solid rgba(178,39,48,.28)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dg)" stroke-width="2.2" style="margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span style="display:flex;flex-direction:column;gap:3px">
+        <span style="font:600 12px/1.35 Inter,sans-serif;color:var(--dg)">Login failed for user 'analytics_ro'</span>
+        <span style="font:400 11px/1.5 'JetBrains Mono',monospace;color:var(--tx2)">Msg 18456, Level 14, State 1 · client IP 203.0.113.24 may need a firewall rule</span>
+      </span>
+    </div>
+  </div>
+</div>
+<div data-panel="dark" style="--bg:#0E1417;--sf:#141B20;--sf2:#1B242A;--bd:#263136;--bd2:#37454C;--tx:#E7EEF1;--tx2:#9EABB3;--tx3:#6D7D86;--ac:#2FB5AC;--ach:#8FE3DB;--acs:#10312F;--ok:#3FBE79;--wn:#D89B3C;--dg:#E76A70;--oks:#122A1F;--wns:#2C2312;--dgs:#2E1618;--onac:#06231F;--sh:0 1px 2px rgba(0,0,0,.4),0 16px 38px rgba(0,0,0,.5);width:600px;background:var(--bg);border:1px solid var(--bd2);border-radius:10px;box-shadow:var(--sh);overflow:hidden;font-family:Inter,sans-serif;color:var(--tx)">
+  <div style="display:flex;align-items:center;gap:10px;padding:16px 20px 14px;border-bottom:1px solid var(--bd)">
+    <svg width="16" height="16" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--ac)" stroke-width="3.4" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--ac)"/></svg>
+    <span style="font:600 14px/1.3 Inter,sans-serif">New connection</span>
+    <div style="flex:1"></div>
+    <span style="font:400 11px/1 'JetBrains Mono',monospace;color:var(--tx3)">esc to close</span>
+  </div>
+  <div style="padding:18px 20px 20px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Engine</span>
+      <div style="display:flex;gap:10px">
+        <span style="flex:1;display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;border:1.5px solid var(--ac);background:var(--acs)">
+          <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#2E8FD9;font:700 9px/1 Inter,sans-serif;color:#fff">AZ</span>
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font:600 12.5px/1 Inter,sans-serif;color:var(--ach)">Azure SQL</span><span style="font:400 10.5px/1.3 Inter,sans-serif;color:var(--tx2)">TDS 1.4 · encrypted</span></span>
+        </span>
+        <span style="flex:1;display:flex;align-items:center;gap:9px;padding:10px 12px;border-radius:8px;border:1px solid var(--bd2);background:var(--bg)">
+          <span style="display:flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;background:#C98A2E;font:700 9px/1 Inter,sans-serif;color:#fff">MY</span>
+          <span style="display:flex;flex-direction:column;gap:2px"><span style="font:600 12.5px/1 Inter,sans-serif;color:var(--tx)">MySQL</span><span style="font:400 10.5px/1.3 Inter,sans-serif;color:var(--tx2)">8.x · 5.7</span></span>
+        </span>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 108px;gap:12px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Host</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">sales-prod.database.windows.net</span></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Port</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">1433</span></label>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Database</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);font:400 12.5px/1 'JetBrains Mono',monospace;color:var(--tx)">analytics</span></label>
+      <label style="display:flex;flex-direction:column;gap:6px"><span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Display name</span><span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--bg);box-shadow:0 0 0 3px rgba(47,181,172,.14);outline:1px solid var(--ac);outline-offset:-1px;font:400 12.5px/1 Inter,sans-serif;color:var(--tx)">sales-prod<span style="display:inline-block;width:1.5px;height:14px;background:var(--ac);margin-left:1px"></span></span></label>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <span style="font:500 11.5px/1 Inter,sans-serif;color:var(--tx2)">Authentication</span>
+      <span style="display:flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--bd2);border-radius:6px;background:var(--sf2);font:400 12.5px/1 Inter,sans-serif;color:var(--tx)">Azure AD — access token<div style="flex:1"></div><svg width="10" height="10" viewBox="0 0 12 12" fill="var(--tx2)"><path d="M2 4.5h8L6 9Z"/></svg></span>
+      <div style="display:flex;align-items:flex-start;gap:9px;padding:10px 12px;border-radius:8px;background:var(--sf);border:1px solid var(--bd)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--tx2)" stroke-width="1.8" style="margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+        <span style="font:400 11.5px/1.5 Inter,sans-serif;color:var(--tx2)">Custos requests a token from your signed-in Azure identity at connect time. Nothing is stored on disk — SQL auth credentials, when used, go to the OS keychain.</span>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:flex-start;gap:11px;padding:12px 13px;border-radius:8px;background:var(--acs);border:1px solid rgba(47,181,172,.22)">
+      <span style="flex:none;width:34px;height:20px;border-radius:10px;background:var(--ac);display:flex;align-items:center;justify-content:flex-end;padding:0 2px;box-sizing:border-box;margin-top:1px"><span style="width:16px;height:16px;border-radius:50%;background:#fff"></span></span>
+      <span style="display:flex;flex-direction:column;gap:3px">
+        <span style="display:flex;align-items:center;gap:6px;font:600 12.5px/1.2 Inter,sans-serif;color:var(--ach)">Read-only connection
+          <svg width="11" height="11" viewBox="0 0 48 48" fill="var(--ac)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>
+        </span>
+        <span style="font:400 11.5px/1.5 Inter,sans-serif;color:var(--tx2)">Blocks <span style="font-family:'JetBrains Mono',monospace">INSERT</span>, <span style="font-family:'JetBrains Mono',monospace">UPDATE</span>, <span style="font-family:'JetBrains Mono',monospace">DELETE</span>, <span style="font-family:'JetBrains Mono',monospace">DROP</span> and DDL before they leave your machine, and opens the session with <span style="font-family:'JetBrains Mono',monospace">READ ONLY</span> intent. You can still run <span style="font-family:'JetBrains Mono',monospace">SELECT</span> and explain plans.</span>
+      </span>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;background:var(--oks);border:1px solid rgba(63,190,121,.28)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" stroke-width="2.6"><path d="m5 13 4 4 10-10"/></svg>
+      <span style="font:500 12px/1.4 Inter,sans-serif;color:var(--ok)">Connected in 340 ms · SQL Server 2022 (16.0.1000) · 14 tables visible</span>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;padding:13px 20px;background:var(--sf);border-top:1px solid var(--bd)">
+    <span style="display:flex;align-items:center;gap:7px;height:31px;padding:0 12px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg);font:500 12.5px/1 Inter,sans-serif;color:var(--tx)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 12a8 8 0 1 1 3 6.2"/><path d="M4 19v-5h5"/></svg>Test connection</span>
+    <div style="flex:1"></div>
+    <span style="display:flex;align-items:center;height:31px;padding:0 13px;border-radius:6px;border:1px solid var(--bd2);background:var(--bg);font:500 12.5px/1 Inter,sans-serif;color:var(--tx2)">Cancel</span>
+    <span style="display:flex;align-items:center;gap:7px;height:31px;padding:0 14px;border-radius:6px;background:var(--ac);color:var(--onac);font:600 12.5px/1 Inter,sans-serif;box-shadow:0 1px 1px rgba(0,0,0,.45),0 0 0 3px rgba(47,181,172,.18)">Save &amp; connect<span style="font:500 10px/1 'JetBrains Mono',monospace;opacity:.72">⌘S</span></span>
+  </div>
+  <div style="padding:14px 20px 18px;border-top:1px solid var(--bd);display:flex;flex-direction:column;gap:9px">
+    <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3)">Other test states</span>
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:var(--sf);border:1px solid var(--bd)">
+      <span style="width:13px;height:13px;border-radius:50%;border:2px solid var(--tx3);border-top-color:transparent"></span>
+      <span style="font:500 12px/1.4 Inter,sans-serif;color:var(--tx2)">Testing… handshake with sales-prod.database.windows.net</span>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;background:var(--dgs);border:1px solid rgba(231,106,112,.28)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--dg)" stroke-width="2.2" style="margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+      <span style="display:flex;flex-direction:column;gap:3px">
+        <span style="font:600 12px/1.35 Inter,sans-serif;color:var(--dg)">Login failed for user 'analytics_ro'</span>
+        <span style="font:400 11px/1.5 'JetBrains Mono',monospace;color:var(--tx2)">Msg 18456, Level 14, State 1 · client IP 203.0.113.24 may need a firewall rule</span>
+      </span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+

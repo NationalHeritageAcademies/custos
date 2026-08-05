@@ -1,0 +1,13 @@
+{
+  "name": "@custos/core",
+  "version": "0.0.0",
+  "description": "Core driver contract, registry, result normalization, and SQL safety guards for Custos.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "pretest": "tsc -b",
+    "test": "node --test"
+  }
+}

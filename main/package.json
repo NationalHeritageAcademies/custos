@@ -1,0 +1,22 @@
+{
+  "name": "@custos/app",
+  "version": "0.0.0",
+  "description": "Custos desktop application — Electron main process, engine, and IPC.",
+  "license": "MIT",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -b",
+    "pretest": "tsc -b",
+    "test": "node --test",
+    "start": "electron ."
+  },
+  "dependencies": {
+    "@custos/core": "*",
+    "@custos/driver-azuresql": "*",
+    "@custos/driver-mysql": "*",
+    "@custos/shared": "*"
+  },
+  "devDependencies": {
+    "electron": "^31.3.1"
+  }
+}
