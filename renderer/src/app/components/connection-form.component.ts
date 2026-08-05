@@ -17,8 +17,10 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
         <div class="dialog" (click)="$event.stopPropagation()">
           <div class="head">
             <svg width="16" height="16" viewBox="0 0 48 48" fill="none"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z" stroke="var(--accent)" stroke-width="3.4" stroke-linejoin="round"/><path d="M24 18a3.5 3.5 0 0 1 1.6 6.6v6.5a1.6 1.6 0 0 1-3.2 0v-6.5A3.5 3.5 0 0 1 24 18Z" fill="var(--accent)"/></svg>
-            <span class="title">New connection</span>
-            <button class="importlink" (click)="ws.closeForm(); ws.openImport()">Import from DataGrip</button>
+            <span class="title">{{ ws.editingId() ? 'Edit connection' : 'New connection' }}</span>
+            @if (!ws.editingId()) {
+              <button class="importlink" (click)="ws.closeForm(); ws.openImport()">Import from DataGrip</button>
+            }
             <span class="esc">esc to close</span>
           </div>
 
@@ -58,7 +60,7 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
                     </select>
                   } @else {
                     <input class="input mono" [type]="f.type === 'password' ? 'password' : f.type === 'number' ? 'number' : 'text'"
-                           [placeholder]="f.placeholder ?? ''" [value]="strVal(f.key)"
+                           [placeholder]="placeholderFor(f)" [value]="strVal(f.key)"
                            (input)="ws.setField(f.key, f.type === 'number' ? +val($event) : val($event))" />
                   }
                   @if (f.help) { <span class="help">{{ f.help }}</span> }
@@ -160,6 +162,10 @@ export class ConnectionFormComponent {
   strVal(key: string): string {
     const v = this.ws.draft()?.values[key];
     return v === undefined || typeof v === 'boolean' ? '' : String(v);
+  }
+  placeholderFor(f: ConnectionField): string {
+    if (f.secret && this.ws.editingId()) return 'leave blank to keep current';
+    return f.placeholder ?? '';
   }
   boolVal(key: string): boolean {
     return this.ws.draft()?.values[key] === true;

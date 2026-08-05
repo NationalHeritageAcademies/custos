@@ -65,7 +65,15 @@ export class ConnectionManager {
     // Validate the driver exists before persisting anything.
     this.registry.get(input.config.driverId);
     await this.connectionStore.save(input.config);
-    await this.secretStore.set(input.config.id, input.secrets);
+    // Merge secrets: only the keys actually provided are updated, so editing a
+    // connection without re-typing its password keeps the stored one.
+    if (input.secrets && Object.keys(input.secrets).length > 0) {
+      const existing = await this.secretStore.get(input.config.id);
+      await this.secretStore.set(input.config.id, { ...existing, ...input.secrets });
+    }
+    // A live connection may hold stale credentials; drop it so the next open
+    // reconnects with the updated config/secrets.
+    await this.closeConnection(input.config.id);
     return input.config;
   }
 

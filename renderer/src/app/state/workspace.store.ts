@@ -89,6 +89,8 @@ export class WorkspaceStore {
   // --- Connection form ---
   readonly drivers = signal<DriverInfo[]>([]);
   readonly formOpen = signal(false);
+  /** Non-null when the form is editing an existing connection (its id). */
+  readonly editingId = signal<string | null>(null);
   readonly draft = signal<ConnectionDraft | null>(null);
   readonly testStatus = signal<TestStatus>('idle');
   readonly testMessage = signal<string>('');
@@ -321,17 +323,46 @@ export class WorkspaceStore {
 
   // --- Connection form actions ---
 
-  openConnectionForm(): void {
-    const driver = this.drivers()[0];
-    this.draft.set(this.blankDraft(driver?.metadata.id ?? 'mysql'));
+  /** Open the form to create a new connection, or (with an id) edit an existing one. */
+  openConnectionForm(editId?: string): void {
     this.testStatus.set('idle');
     this.testMessage.set('');
+    if (editId) {
+      const config = this.connections().find((c) => c.id === editId);
+      if (config) {
+        // Start from the driver's defaults, then overlay the saved params.
+        const base = this.blankDraft(config.driverId);
+        this.draft.set({
+          driverId: config.driverId,
+          name: config.name,
+          readOnly: config.readOnly,
+          values: { ...base.values, ...config.params },
+        });
+        this.editingId.set(editId);
+        this.formOpen.set(true);
+        return;
+      }
+    }
+    this.editingId.set(null);
+    const driver = this.drivers()[0];
+    this.draft.set(this.blankDraft(driver?.metadata.id ?? 'mysql'));
     this.formOpen.set(true);
   }
 
   closeForm(): void {
     this.formOpen.set(false);
     this.draft.set(null);
+    this.editingId.set(null);
+  }
+
+  async deleteConnection(id: string): Promise<void> {
+    await this.backend.deleteConnection(id);
+    this.connections.set(await this.backend.listConnections());
+    this.tree.set(this.tree().filter((n) => n.connectionId !== id));
+    if (this.activeConnectionId() === id) {
+      this.activeConnectionId.set(null);
+      this.activeDatabase.set(null);
+    }
   }
 
   selectDriver(driverId: string): void {
@@ -451,7 +482,8 @@ export class WorkspaceStore {
     const d = this.draft();
     if (!d) return;
     const { params, secrets } = this.splitValues();
-    const id = globalThis.crypto?.randomUUID?.() ?? `c${Date.now()}`;
+    const editing = this.editingId();
+    const id = editing ?? globalThis.crypto?.randomUUID?.() ?? `c${Date.now()}`;
     const fallbackName = String(params['database'] ?? params['host'] ?? params['server'] ?? 'connection');
     const config: ConnectionConfig = {
       id,
@@ -462,7 +494,12 @@ export class WorkspaceStore {
     };
     await this.backend.saveConnection({ config, secrets });
     this.connections.set(await this.backend.listConnections());
-    this.tree.set([...this.tree(), this.connectionNode(config, false)]);
+    if (editing) {
+      // Replace the existing tree node so it reconnects with the new config.
+      this.tree.set(this.tree().map((n) => (n.connectionId === id ? this.connectionNode(config, false) : n)));
+    } else {
+      this.tree.set([...this.tree(), this.connectionNode(config, false)]);
+    }
     this.activeConnectionId.set(id);
     this.closeForm();
   }

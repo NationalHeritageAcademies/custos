@@ -47,6 +47,16 @@ import { WorkspaceStore, type TreeNode } from '../state/workspace.store';
               <svg width="9" height="9" viewBox="0 0 48 48" fill="var(--accent)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>RO
             </span>
           }
+          @if (node.kind === 'connection') {
+            <span class="actions">
+              <button class="act" title="Edit connection" (click)="edit($event, node)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button class="act" title="Delete connection" (click)="remove($event, node)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"/></svg>
+              </button>
+            </span>
+          }
           @if (node.loading) { <span class="spin"></span> }
         </div>
       }
@@ -62,9 +72,13 @@ import { WorkspaceStore, type TreeNode } from '../state/workspace.store';
     .chev.open { transform: rotate(90deg); }
     .chev-spacer { width: 9px; flex: none; }
     .badge { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; font: 700 8px/1 var(--font-ui); color: #fff; flex: none; }
-    .label { overflow: hidden; text-overflow: ellipsis; }
+    .label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
     .label.strong { font-weight: 600; }
-    .ro { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; padding: 1px 5px 1px 4px; border-radius: 4px; background: var(--accent-subtle); border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); font: 600 9px/1.4 var(--font-ui); letter-spacing: .04em; color: var(--accent-hover); }
+    .ro { display: inline-flex; align-items: center; gap: 3px; padding: 1px 5px 1px 4px; border-radius: 4px; background: var(--accent-subtle); border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent); font: 600 9px/1.4 var(--font-ui); letter-spacing: .04em; color: var(--accent-hover); }
+    .actions { display: none; align-items: center; gap: 1px; }
+    .row:hover .actions { display: flex; }
+    .act { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--text-3); cursor: pointer; }
+    .act:hover { background: var(--bg); color: var(--text); }
     .spin { width: 9px; height: 9px; margin-left: auto; border-radius: 50%; border: 1.5px solid var(--warning); border-top-color: transparent; animation: s .7s linear infinite; }
     @keyframes s { to { transform: rotate(360deg); } }
   `],
@@ -80,5 +94,17 @@ export class ConnectionTreeComponent {
   }
   engineColor(driverId?: string): string {
     return driverId === 'mysql' ? '#C98A2E' : '#2E8FD9';
+  }
+
+  edit(event: Event, node: TreeNode): void {
+    event.stopPropagation();
+    this.ws.openConnectionForm(node.connectionId);
+  }
+
+  remove(event: Event, node: TreeNode): void {
+    event.stopPropagation();
+    if (confirm(`Delete connection "${node.label}"? This removes its saved settings from Custos.`)) {
+      void this.ws.deleteConnection(node.connectionId);
+    }
   }
 }

@@ -67,6 +67,11 @@ The design (`docs/design/screens/`) provides 10 screens.
   adaptation, test success, save → new node in tree.
 - ✅ **Welcome / first launch** (1f) — empty state + "New connection" CTA
   (exercisable via `?empty`).
+- ✅ **Edit / delete connections** — hover a connection in the tree for edit/delete
+  actions. Edit reopens the form pre-filled from the saved config (title "Edit
+  connection"); secrets merge on save (blank password keeps the current one), so
+  imported connections can have their password added. Saving drops any live
+  connection so it reconnects with the new credentials.
 - ✅ **Import from DataGrip** — parse a JetBrains `dataSources.xml` (SQL Server
   native + jTDS, MySQL/MariaDB; others flagged) into Custos connections, minus
   the password (DataGrip doesn't store it). Import dialog with file-picker + paste,
