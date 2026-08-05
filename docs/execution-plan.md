@@ -60,11 +60,14 @@ The design (`docs/design/screens/`) provides 10 screens.
   rows), read-only guard error, and destructive-confirmation dialog.
 - ✅ **Safety dialog** (1g) — implemented (`safety-dialog.component.ts`); consumes the
   `CONFIRMATION_REQUIRED` analyses and re-runs on confirm.
-- 🟡 **Component states** (1i) — grid empty/error/loading states done; remaining:
-  connection connecting/error chips, query cancel state.
-- ⬜ **Connection form** (1e) — engine-adaptive form built from `connectionFields`,
-  test-connection states, read-only toggle.
-- ⬜ **Welcome / first launch** (1f) — empty state + "New connection" CTA.
+- ✅ **Connection form** (1e) — modal built entirely from each driver's
+  `connectionFields` (types, secrets, `select` options, `visibleWhen`), live
+  test-connection status, read-only toggle. **Verified:** Azure↔MySQL field
+  adaptation, test success, save → new node in tree.
+- ✅ **Welcome / first launch** (1f) — empty state + "New connection" CTA
+  (exercisable via `?empty`).
+- 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
+  states done; remaining: tree connecting/error chips, query cancel state.
 - ⬜ **Query history** (1h) — searchable, per connection.
 - ⬜ **Live against a real database** — the components already call `CustosApi`; run the
   Electron app against a local MySQL container to exercise driver → engine → IPC → UI

@@ -1,11 +1,25 @@
 import { Injectable, computed, signal } from '@angular/core';
 import type {
   ConnectionConfig,
+  ConnectionField,
+  ConnectionSecrets,
+  DriverInfo,
   ResultSet,
   StatementAnalysis,
   TableRef,
 } from '@custos/shared';
 import { resolveBackend, isLiveBackend } from '../data/backend';
+
+export type FieldValue = string | number | boolean;
+
+export interface ConnectionDraft {
+  driverId: string;
+  name: string;
+  readOnly: boolean;
+  values: Record<string, FieldValue>;
+}
+
+export type TestStatus = 'idle' | 'testing' | 'ok' | 'error';
 
 export type TreeKind = 'connection' | 'database' | 'schema' | 'table';
 
@@ -65,6 +79,29 @@ export class WorkspaceStore {
   readonly confirm = signal<StatementAnalysis[] | null>(null);
   private pendingConfirmSql: string | null = null;
 
+  // --- Connection form ---
+  readonly drivers = signal<DriverInfo[]>([]);
+  readonly formOpen = signal(false);
+  readonly draft = signal<ConnectionDraft | null>(null);
+  readonly testStatus = signal<TestStatus>('idle');
+  readonly testMessage = signal<string>('');
+
+  readonly currentDriver = computed<DriverInfo | null>(() => {
+    const d = this.draft();
+    return d ? this.drivers().find((x) => x.metadata.id === d.driverId) ?? null : null;
+  });
+
+  /** Fields to render for the current draft, honoring each field's `visibleWhen`. */
+  readonly visibleFields = computed<ConnectionField[]>(() => {
+    const driver = this.currentDriver();
+    const d = this.draft();
+    if (!driver || !d) return [];
+    return driver.connectionFields.filter((f) => {
+      if (!f.visibleWhen) return true;
+      return String(d.values[f.visibleWhen.field] ?? '') === f.visibleWhen.equals;
+    });
+  });
+
   readonly activeConnection = computed(() =>
     this.connections().find((c) => c.id === this.activeConnectionId()) ?? null,
   );
@@ -72,6 +109,7 @@ export class WorkspaceStore {
   readonly truncated = computed(() => this.result()?.truncated ?? false);
 
   async init(): Promise<void> {
+    this.drivers.set(await this.backend.listDrivers());
     const connections = await this.backend.listConnections();
     this.connections.set(connections);
     this.tree.set(connections.map((c, i) => this.connectionNode(c, i === 0)));
@@ -248,5 +286,111 @@ export class WorkspaceStore {
   cancelConfirm(): void {
     this.confirm.set(null);
     this.pendingConfirmSql = null;
+  }
+
+  // --- Connection form actions ---
+
+  openConnectionForm(): void {
+    const driver = this.drivers()[0];
+    this.draft.set(this.blankDraft(driver?.metadata.id ?? 'mysql'));
+    this.testStatus.set('idle');
+    this.testMessage.set('');
+    this.formOpen.set(true);
+  }
+
+  closeForm(): void {
+    this.formOpen.set(false);
+    this.draft.set(null);
+  }
+
+  selectDriver(driverId: string): void {
+    if (this.draft()?.driverId === driverId) return;
+    this.draft.set(this.blankDraft(driverId));
+    this.testStatus.set('idle');
+    this.testMessage.set('');
+  }
+
+  private blankDraft(driverId: string): ConnectionDraft {
+    const driver = this.drivers().find((d) => d.metadata.id === driverId);
+    const values: Record<string, FieldValue> = {};
+    for (const f of driver?.connectionFields ?? []) {
+      if (f.default !== undefined) values[f.key] = f.default;
+      else values[f.key] = f.type === 'boolean' ? false : '';
+    }
+    return { driverId, name: this.draft()?.name ?? '', readOnly: driverId === 'azuresql', values };
+  }
+
+  setField(key: string, value: FieldValue): void {
+    const d = this.draft();
+    if (!d) return;
+    this.draft.set({ ...d, values: { ...d.values, [key]: value } });
+    this.testStatus.set('idle');
+  }
+
+  setName(name: string): void {
+    const d = this.draft();
+    if (d) this.draft.set({ ...d, name });
+  }
+
+  setReadOnly(readOnly: boolean): void {
+    const d = this.draft();
+    if (d) this.draft.set({ ...d, readOnly });
+  }
+
+  private splitValues(): { params: Record<string, FieldValue>; secrets: ConnectionSecrets } {
+    const driver = this.currentDriver();
+    const d = this.draft()!;
+    const params: Record<string, FieldValue> = {};
+    const secrets: Record<string, string> = {};
+    for (const f of driver?.connectionFields ?? []) {
+      const v = d.values[f.key];
+      if (v === undefined || v === '') continue;
+      if (f.secret) secrets[f.key] = String(v);
+      else params[f.key] = v;
+    }
+    return { params, secrets };
+  }
+
+  async test(): Promise<void> {
+    const d = this.draft();
+    if (!d) return;
+    this.testStatus.set('testing');
+    this.testMessage.set(`Handshake with ${d.values['server'] ?? d.values['host'] ?? 'server'}…`);
+    try {
+      const { params, secrets } = this.splitValues();
+      const res = await this.backend.testConnection({ driverId: d.driverId, params, secrets, readOnly: d.readOnly });
+      if (res.ok) {
+        this.testStatus.set('ok');
+        const version = res.serverVersion ? ` · ${res.serverVersion}` : '';
+        const latency = res.latencyMs != null ? ` · ${res.latencyMs} ms` : '';
+        this.testMessage.set(`${res.message}${version}${latency}`);
+      } else {
+        this.testStatus.set('error');
+        this.testMessage.set(res.message);
+      }
+    } catch (err) {
+      this.testStatus.set('error');
+      this.testMessage.set(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async save(): Promise<void> {
+    const d = this.draft();
+    if (!d) return;
+    const { params, secrets } = this.splitValues();
+    const id = globalThis.crypto?.randomUUID?.() ?? `c${Date.now()}`;
+    const fallbackName = String(params['database'] ?? params['host'] ?? params['server'] ?? 'connection');
+    const config: ConnectionConfig = {
+      id,
+      name: d.name || fallbackName,
+      driverId: d.driverId,
+      readOnly: d.readOnly,
+      params,
+    };
+    await this.backend.saveConnection({ config, secrets });
+    this.connections.set(await this.backend.listConnections());
+    this.tree.set([...this.tree(), this.connectionNode(config, false)]);
+    this.activeConnectionId.set(id);
+    this.closeForm();
   }
 }

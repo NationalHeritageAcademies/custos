@@ -95,12 +95,44 @@ function churnRows(count: number): SqlValue[][] {
  * automatically when `window.custos` is absent (i.e. running outside Electron).
  */
 export class DemoBackend implements CustosApi {
-  private readonly connections = [...DEMO_CONNECTIONS];
+  private readonly connections: ConnectionConfig[];
+
+  constructor() {
+    // ?empty exercises the first-launch / welcome screen.
+    const empty = typeof location !== 'undefined' && new URLSearchParams(location.search).has('empty');
+    this.connections = empty ? [] : [...DEMO_CONNECTIONS];
+  }
 
   async listDrivers(): Promise<DriverInfo[]> {
+    // Field specs mirror the real drivers (they are pure data — no DB deps).
     return [
-      { metadata: { id: 'azuresql', displayName: 'Azure SQL', iconId: 'azuresql' }, capabilities: { supportsSchemas: true, supportsTransactions: true, supportsMultipleResultSets: true, supportsCancel: true, paramStyle: 'named', defaultPort: 1433 }, connectionFields: [] },
-      { metadata: { id: 'mysql', displayName: 'MySQL', iconId: 'mysql' }, capabilities: { supportsSchemas: false, supportsTransactions: true, supportsMultipleResultSets: true, supportsCancel: true, paramStyle: 'positional', defaultPort: 3306 }, connectionFields: [] },
+      {
+        metadata: { id: 'azuresql', displayName: 'Azure SQL', iconId: 'azuresql' },
+        capabilities: { supportsSchemas: true, supportsTransactions: true, supportsMultipleResultSets: true, supportsCancel: true, paramStyle: 'named', defaultPort: 1433 },
+        connectionFields: [
+          { key: 'server', label: 'Server', type: 'string', required: true, placeholder: 'myserver.database.windows.net' },
+          { key: 'port', label: 'Port', type: 'number', required: true, default: 1433 },
+          { key: 'database', label: 'Database', type: 'string', required: true },
+          { key: 'authMode', label: 'Authentication', type: 'select', required: true, default: 'sql', options: [ { value: 'sql', label: 'SQL login' }, { value: 'azuread-token', label: 'Azure AD access token' } ] },
+          { key: 'user', label: 'User', type: 'string', visibleWhen: { field: 'authMode', equals: 'sql' } },
+          { key: 'password', label: 'Password', type: 'password', secret: true, visibleWhen: { field: 'authMode', equals: 'sql' } },
+          { key: 'accessToken', label: 'Access token', type: 'password', secret: true, visibleWhen: { field: 'authMode', equals: 'azuread-token' }, help: 'An Entra ID access token for https://database.windows.net/.' },
+          { key: 'encrypt', label: 'Encrypt', type: 'boolean', default: true },
+          { key: 'trustServerCertificate', label: 'Trust server certificate', type: 'boolean', default: false },
+        ],
+      },
+      {
+        metadata: { id: 'mysql', displayName: 'MySQL', iconId: 'mysql' },
+        capabilities: { supportsSchemas: false, supportsTransactions: true, supportsMultipleResultSets: true, supportsCancel: true, paramStyle: 'positional', defaultPort: 3306 },
+        connectionFields: [
+          { key: 'host', label: 'Host', type: 'string', required: true, default: 'localhost' },
+          { key: 'port', label: 'Port', type: 'number', required: true, default: 3306 },
+          { key: 'user', label: 'User', type: 'string', required: true },
+          { key: 'password', label: 'Password', type: 'password', secret: true },
+          { key: 'database', label: 'Database', type: 'string', placeholder: 'optional' },
+          { key: 'ssl', label: 'Use TLS', type: 'boolean', default: false, help: 'Require an encrypted connection to the server.' },
+        ],
+      },
     ];
   }
 

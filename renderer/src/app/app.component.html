@@ -20,7 +20,7 @@
     <div style="width:268px;flex:none;display:flex;flex-direction:column;background:var(--surface);border-right:1px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 12px 8px">
         <span style="font:600 10px/1 Inter,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)">Connections</span>
-        <span style="display:flex;align-items:center;gap:4px;padding:2px 7px 2px 5px;border-radius:5px;border:1px solid var(--border-strong);background:var(--bg);font:500 10.5px/1.5 Inter,sans-serif;color:var(--text-2)"><svg width="10" height="10" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 5v14M5 12h14"/></svg>New</span>
+        <span style="display:flex;align-items:center;gap:4px;padding:2px 7px 2px 5px;border-radius:5px;border:1px solid var(--border-strong);background:var(--bg);font:500 10.5px/1.5 Inter,sans-serif;color:var(--text-2);cursor:pointer" (click)="ws.openConnectionForm()"><svg width="10" height="10" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 5v14M5 12h14"/></svg>New</span>
       </div>
       <div style="padding:0 10px 10px">
         <div style="display:flex;align-items:center;gap:7px;height:27px;padding:0 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;box-shadow:0 0 0 3px rgba(15,111,108,.14);outline:1px solid var(--accent);outline-offset:-1px">
@@ -119,4 +119,6 @@
     </div>
   </div>
 <app-safety-dialog></app-safety-dialog>
+<app-connection-form></app-connection-form>
+@if (ws.connections().length === 0) { <app-welcome></app-welcome> }
 </div>
