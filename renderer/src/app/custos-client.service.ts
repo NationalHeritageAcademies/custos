@@ -37,9 +37,10 @@ export class CustosClient {
   closeConnection: CustosApi['closeConnection'] = (id) => this.require().closeConnection(id);
   listDatabases: CustosApi['listDatabases'] = (id) => this.require().listDatabases(id);
   listSchemas: CustosApi['listSchemas'] = (id, db) => this.require().listSchemas(id, db);
-  listTables: CustosApi['listTables'] = (id, schema) => this.require().listTables(id, schema);
+  listTables: CustosApi['listTables'] = (id, database, schema) => this.require().listTables(id, database, schema);
   listColumns: CustosApi['listColumns'] = (id, table) => this.require().listColumns(id, table);
   listForeignKeys: CustosApi['listForeignKeys'] = (id, table) => this.require().listForeignKeys(id, table);
+  setActiveDatabase: CustosApi['setActiveDatabase'] = (id, database) => this.require().setActiveDatabase(id, database);
   runQuery: CustosApi['runQuery'] = (input) => this.require().runQuery(input);
   cancelQuery: CustosApi['cancelQuery'] = (id, queryId) => this.require().cancelQuery(id, queryId);
   analyzeSql: CustosApi['analyzeSql'] = (sql) => this.require().analyzeSql(sql);

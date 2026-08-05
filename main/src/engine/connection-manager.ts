@@ -41,6 +41,7 @@ export class ConnectionManager {
   private readonly open = new Map<string, DriverConnection>();
   private readonly openConfigs = new Map<string, ConnectionConfig>();
   private readonly inflight = new Map<string, AbortController>();
+  private readonly activeDatabase = new Map<string, string>();
 
   constructor(
     private readonly registry: DriverRegistry,
@@ -105,6 +106,7 @@ export class ConnectionManager {
     await connection.close();
     this.open.delete(id);
     this.openConfigs.delete(id);
+    this.activeDatabase.delete(id);
   }
 
   listDatabases(id: string): Promise<string[]> {
@@ -113,8 +115,18 @@ export class ConnectionManager {
   listSchemas(id: string, database?: string): Promise<string[]> {
     return this.requireOpen(id).listSchemas(database);
   }
-  listTables(id: string, schema?: string): Promise<TableRef[]> {
-    return this.requireOpen(id).listTables(schema);
+  listTables(id: string, database?: string, schema?: string): Promise<TableRef[]> {
+    return this.requireOpen(id).listTables(database, schema);
+  }
+
+  /** Set the current database for subsequent queries on this connection. */
+  async setActiveDatabase(id: string, database: string): Promise<void> {
+    await this.requireOpen(id).useDatabase(database);
+    this.activeDatabase.set(id, database);
+  }
+
+  getActiveDatabase(id: string): string | null {
+    return this.activeDatabase.get(id) ?? null;
   }
   listColumns(id: string, table: TableRef): Promise<ColumnMeta[]> {
     return this.requireOpen(id).getColumns(table);

@@ -38,7 +38,7 @@ const CAPABILITIES: DriverCapabilities = {
 const CONNECTION_FIELDS: ConnectionField[] = [
   { key: 'server', label: 'Server', type: 'string', required: true, placeholder: 'myserver.database.windows.net' },
   { key: 'port', label: 'Port', type: 'number', required: true, default: 1433 },
-  { key: 'database', label: 'Database', type: 'string', required: true },
+  { key: 'database', label: 'Database', type: 'string', placeholder: 'optional — browse and pick from the tree', help: 'Leave blank to connect to the server and choose a database from the tree.' },
   {
     key: 'authMode',
     label: 'Authentication',
@@ -90,7 +90,8 @@ export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets
       encrypt: p.encrypt !== false,
       trustServerCertificate: p.trustServerCertificate === true,
     },
-    pool: { max: 4, min: 0, idleTimeoutMillis: 30_000 },
+    // Single pooled connection so a `USE [db]` sticks for later queries.
+    pool: { max: 1, min: 0, idleTimeoutMillis: 30_000 },
   };
 
   if (p.authMode === 'azuread-token') {
@@ -115,6 +116,16 @@ export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets
   }
 
   return { ...base, user: p.user ? String(p.user) : undefined, password: secrets.password };
+}
+
+/** Quote a SQL Server identifier: [name], with ] doubled. */
+function bracket(name: string): string {
+  return '[' + name.replace(/]/g, ']]') + ']';
+}
+
+/** `[db].` prefix for three-part names, or '' to use the current database. */
+function dbPrefix(database?: string): string {
+  return database ? `${bracket(database)}.` : '';
 }
 
 function columnsOf(recordset: sql.IRecordSet<Record<string, unknown>> | undefined): ColumnMeta[] {
@@ -143,28 +154,30 @@ class AzureSqlConnection implements DriverConnection {
     return rows.map((r) => r.name);
   }
 
-  async listSchemas(): Promise<string[]> {
+  async listSchemas(database?: string): Promise<string[]> {
     const rows = await this.rows<{ name: string }>(
-      `SELECT name FROM sys.schemas
+      `SELECT name FROM ${dbPrefix(database)}sys.schemas
         WHERE name NOT IN ('sys','INFORMATION_SCHEMA','guest')
         ORDER BY name`,
     );
     return rows.map((r) => r.name);
   }
 
-  async listTables(schema?: string): Promise<TableRef[]> {
+  async listTables(database?: string, schema?: string): Promise<TableRef[]> {
     const request = this.pool.request();
     let where = '';
     if (schema) {
       request.input('schema', sql.NVarChar, schema);
       where = 'WHERE TABLE_SCHEMA = @schema';
     }
+    // Three-part name reads any database without changing the session context.
     const result = await request.query<{ TABLE_SCHEMA: string; TABLE_NAME: string; TABLE_TYPE: string }>(
       `SELECT TABLE_SCHEMA, TABLE_NAME, TABLE_TYPE
-         FROM INFORMATION_SCHEMA.TABLES ${where}
+         FROM ${dbPrefix(database)}INFORMATION_SCHEMA.TABLES ${where}
         ORDER BY TABLE_SCHEMA, TABLE_NAME`,
     );
     return (result.recordset ?? []).map((r) => ({
+      database: database ?? null,
       schema: r.TABLE_SCHEMA,
       name: r.TABLE_NAME,
       kind: r.TABLE_TYPE === 'VIEW' ? 'view' : 'table',
@@ -177,7 +190,7 @@ class AzureSqlConnection implements DriverConnection {
     request.input('table', sql.NVarChar, table.name);
     const result = await request.query<{ COLUMN_NAME: string; DATA_TYPE: string; IS_NULLABLE: string }>(
       `SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE
-         FROM INFORMATION_SCHEMA.COLUMNS
+         FROM ${dbPrefix(table.database ?? undefined)}INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @table
         ORDER BY ORDINAL_POSITION`,
     );
@@ -192,6 +205,7 @@ class AzureSqlConnection implements DriverConnection {
     const request = this.pool.request();
     request.input('schema', sql.NVarChar, table.schema ?? 'dbo');
     request.input('table', sql.NVarChar, table.name);
+    const p = dbPrefix(table.database ?? undefined);
     const result = await request.query<{
       name: string;
       col: string;
@@ -204,14 +218,14 @@ class AzureSqlConnection implements DriverConnection {
               rs.name AS refSchema,
               rt.name AS refTable,
               rc.name AS refCol
-         FROM sys.foreign_keys fk
-         JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
-         JOIN sys.tables pt ON pt.object_id = fk.parent_object_id
-         JOIN sys.schemas ps ON ps.schema_id = pt.schema_id
-         JOIN sys.columns pc ON pc.object_id = pt.object_id AND pc.column_id = fkc.parent_column_id
-         JOIN sys.tables rt ON rt.object_id = fk.referenced_object_id
-         JOIN sys.schemas rs ON rs.schema_id = rt.schema_id
-         JOIN sys.columns rc ON rc.object_id = rt.object_id AND rc.column_id = fkc.referenced_column_id
+         FROM ${p}sys.foreign_keys fk
+         JOIN ${p}sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
+         JOIN ${p}sys.tables pt ON pt.object_id = fk.parent_object_id
+         JOIN ${p}sys.schemas ps ON ps.schema_id = pt.schema_id
+         JOIN ${p}sys.columns pc ON pc.object_id = pt.object_id AND pc.column_id = fkc.parent_column_id
+         JOIN ${p}sys.tables rt ON rt.object_id = fk.referenced_object_id
+         JOIN ${p}sys.schemas rs ON rs.schema_id = rt.schema_id
+         JOIN ${p}sys.columns rc ON rc.object_id = rt.object_id AND rc.column_id = fkc.referenced_column_id
         WHERE ps.name = @schema AND pt.name = @table
         ORDER BY fk.name, fkc.constraint_column_id`,
     );
@@ -232,6 +246,11 @@ class AzureSqlConnection implements DriverConnection {
       }
     }
     return [...byName.values()];
+  }
+
+  async useDatabase(database: string): Promise<void> {
+    // Pool max is 1, so this USE persists for subsequent queries.
+    await this.pool.request().query(`USE ${bracket(database)}`);
   }
 
   async query(query: string, options: QueryOptions = {}): Promise<QueryResult> {

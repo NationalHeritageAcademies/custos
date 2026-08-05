@@ -71,6 +71,8 @@ export class WorkspaceStore {
   readonly connections = signal<ConnectionConfig[]>([]);
   readonly tree = signal<TreeNode[]>([]);
   readonly activeConnectionId = signal<string | null>(null);
+  /** The database queries currently run against (server-side USE), if chosen. */
+  readonly activeDatabase = signal<string | null>(null);
 
   readonly sql = signal<string>(DEFAULT_SQL);
   readonly running = signal(false);
@@ -144,11 +146,26 @@ export class WorkspaceStore {
     };
   }
 
+  /** Switch the connection's current database for subsequent queries. */
+  async setActive(connectionId: string, database: string): Promise<void> {
+    this.activeConnectionId.set(connectionId);
+    try {
+      await this.backend.setActiveDatabase(connectionId, database);
+      this.activeDatabase.set(database);
+    } catch (err) {
+      this.error.set(err instanceof Error ? err.message : String(err));
+    }
+  }
+
   /** Expand/collapse a tree node, lazily loading its children the first time. */
   async toggle(node: TreeNode): Promise<void> {
     if (node.kind === 'table') {
-      this.useTable(node);
+      await this.useTable(node);
       return;
+    }
+    // Selecting a database makes it the active query target.
+    if (node.kind === 'database' && node.database) {
+      void this.setActive(node.connectionId, node.database);
     }
     if (node.loaded) {
       node.expanded = !node.expanded;
@@ -191,7 +208,7 @@ export class WorkspaceStore {
       const schemas = await this.backend.listSchemas(node.connectionId, node.database);
       if (schemas.length > 0) {
         return schemas.map((s) => ({
-          key: `s:${node.connectionId}:${s}`,
+          key: `s:${node.connectionId}:${node.database}:${s}`,
           kind: 'schema',
           label: s,
           depth: 2,
@@ -204,20 +221,25 @@ export class WorkspaceStore {
           children: [],
         }));
       }
-      return this.tableNodes(await this.backend.listTables(node.connectionId), node.connectionId, 2);
+      return this.tableNodes(
+        await this.backend.listTables(node.connectionId, node.database),
+        node.connectionId,
+        2,
+      );
     }
     // schema
-    const tables = await this.backend.listTables(node.connectionId, node.schema);
-    return this.tableNodes(tables, node.connectionId, 3, node.schema);
+    const tables = await this.backend.listTables(node.connectionId, node.database, node.schema);
+    return this.tableNodes(tables, node.connectionId, 3);
   }
 
-  private tableNodes(tables: TableRef[], connectionId: string, depth: number, schema?: string): TreeNode[] {
+  private tableNodes(tables: TableRef[], connectionId: string, depth: number): TreeNode[] {
     return tables.map((t) => ({
-      key: `t:${connectionId}:${schema ?? ''}:${t.name}`,
+      key: `t:${connectionId}:${t.database ?? ''}:${t.schema ?? ''}:${t.name}`,
       kind: 'table',
       label: t.name,
       depth,
       connectionId,
+      database: t.database ?? undefined,
       schema: t.schema ?? undefined,
       table: t,
       expanded: false,
@@ -227,9 +249,10 @@ export class WorkspaceStore {
     }));
   }
 
-  /** Clicking a table drops a SELECT into the editor and runs it. */
-  private useTable(node: TreeNode): void {
-    this.activeConnectionId.set(node.connectionId);
+  /** Clicking a table selects its database, drops a SELECT in, and runs it. */
+  private async useTable(node: TreeNode): Promise<void> {
+    if (node.database) await this.setActive(node.connectionId, node.database);
+    else this.activeConnectionId.set(node.connectionId);
     const name = node.schema ? `${node.schema}.${node.table!.name}` : node.table!.name;
     this.sql.set(`SELECT * FROM ${name};`);
     void this.run();

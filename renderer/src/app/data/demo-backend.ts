@@ -31,24 +31,26 @@ const DEMO_CONNECTIONS: ConnectionConfig[] = [
   { id: 'shop-mysql', name: 'shop-mysql', driverId: 'mysql', readOnly: false, params: { host: 'shop.internal', database: 'shopdb' } },
 ];
 
+// Each connection exposes several databases, each with its own tables — so the
+// "connect to the server, then pick a database from the tree" flow is exercised.
 const DATABASES: Record<string, string[]> = {
-  'sales-prod': ['analytics'],
-  'shop-mysql': ['shopdb'],
+  'sales-prod': ['analytics', 'reporting', 'staging'],
+  'shop-mysql': ['shopdb', 'legacy_orders'],
 };
 
-const TABLES: Record<string, TableRef[]> = {
-  'sales-prod': [
-    { schema: 'dbo', name: 'customers', kind: 'table' },
-    { schema: 'dbo', name: 'orders', kind: 'table' },
-    { schema: 'dbo', name: 'order_items', kind: 'table' },
-    { schema: 'dbo', name: 'refunds', kind: 'table' },
-    { schema: 'dbo', name: 'reporting', kind: 'view' },
-  ],
-  'shop-mysql': [
-    { schema: null, name: 'products', kind: 'table' },
-    { schema: null, name: 'carts', kind: 'table' },
-    { schema: null, name: 'inventory', kind: 'table' },
-  ],
+const az = (database: string, name: string, kind: 'table' | 'view' = 'table'): TableRef => ({ database, schema: 'dbo', name, kind });
+const my = (database: string, name: string): TableRef => ({ database, schema: null, name, kind: 'table' });
+
+const TABLES_BY_DB: Record<string, Record<string, TableRef[]>> = {
+  'sales-prod': {
+    analytics: [az('analytics', 'customers'), az('analytics', 'orders'), az('analytics', 'order_items'), az('analytics', 'refunds'), az('analytics', 'reporting', 'view')],
+    reporting: [az('reporting', 'cohorts', 'view'), az('reporting', 'kpis'), az('reporting', 'daily_rollup', 'view')],
+    staging: [az('staging', 'raw_events'), az('staging', 'import_log')],
+  },
+  'shop-mysql': {
+    shopdb: [my('shopdb', 'products'), my('shopdb', 'carts'), my('shopdb', 'inventory')],
+    legacy_orders: [my('legacy_orders', 'orders_2019'), my('legacy_orders', 'orders_2020')],
+  },
 };
 
 const CHURN_COLUMNS: ColumnMeta[] = [
@@ -159,17 +161,20 @@ export class DemoBackend implements CustosApi {
 
   async openConnection(): Promise<void> {}
   async closeConnection(): Promise<void> {}
+  async setActiveDatabase(): Promise<void> {}
 
   async listDatabases(connectionId: string): Promise<string[]> {
     return DATABASES[connectionId] ?? [];
   }
 
   async listSchemas(connectionId: string): Promise<string[]> {
-    return connectionId === 'sales-prod' ? ['dbo', 'reporting'] : [];
+    // Azure connections have a schema level (dbo); MySQL does not.
+    return connectionId === 'sales-prod' ? ['dbo'] : [];
   }
 
-  async listTables(connectionId: string, schema?: string): Promise<TableRef[]> {
-    const all = TABLES[connectionId] ?? [];
+  async listTables(connectionId: string, database?: string, schema?: string): Promise<TableRef[]> {
+    const byDb = TABLES_BY_DB[connectionId] ?? {};
+    const all = database ? (byDb[database] ?? []) : Object.values(byDb).flat();
     return schema ? all.filter((t) => (t.schema ?? '') === schema) : all;
   }
 

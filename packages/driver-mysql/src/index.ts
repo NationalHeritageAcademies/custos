@@ -128,14 +128,17 @@ class MySqlConnection implements DriverConnection {
     return [];
   }
 
-  async listTables(): Promise<TableRef[]> {
+  // In MySQL a "database" is the browsing unit; `schema` is unused.
+  async listTables(database?: string): Promise<TableRef[]> {
     const [rows] = await this.conn.query<mysql.RowDataPacket[]>(
-      `SELECT table_name AS name, table_type AS type
+      `SELECT table_schema AS db, table_name AS name, table_type AS type
          FROM information_schema.tables
-        WHERE table_schema = DATABASE()
+        WHERE table_schema = COALESCE(?, DATABASE())
         ORDER BY table_name`,
+      [database ?? null],
     );
     return rows.map((r) => ({
+      database: String(r.db),
       schema: null,
       name: String(r.name),
       kind: String(r.type).includes('VIEW') ? 'view' : 'table',
@@ -146,9 +149,9 @@ class MySqlConnection implements DriverConnection {
     const [rows] = await this.conn.query<mysql.RowDataPacket[]>(
       `SELECT column_name AS name, data_type AS dataType, is_nullable AS nullable
          FROM information_schema.columns
-        WHERE table_schema = DATABASE() AND table_name = ?
+        WHERE table_schema = COALESCE(?, DATABASE()) AND table_name = ?
         ORDER BY ordinal_position`,
-      [table.name],
+      [table.database ?? null, table.name],
     );
     return rows.map((r) => ({
       name: String(r.name),
@@ -162,11 +165,11 @@ class MySqlConnection implements DriverConnection {
       `SELECT constraint_name AS name, column_name AS col,
               referenced_table_name AS refTable, referenced_column_name AS refCol
          FROM information_schema.key_column_usage
-        WHERE table_schema = DATABASE()
+        WHERE table_schema = COALESCE(?, DATABASE())
           AND table_name = ?
           AND referenced_table_name IS NOT NULL
         ORDER BY constraint_name, ordinal_position`,
-      [table.name],
+      [table.database ?? null, table.name],
     );
     const byName = new Map<string, ForeignKey>();
     for (const r of rows) {
@@ -250,6 +253,12 @@ class MySqlConnection implements DriverConnection {
 
     if (resultSets.length === 0) resultSets.push(emptyResultSet());
     return { resultSets, rowsAffected, executionMs: Date.now() - start };
+  }
+
+  async useDatabase(database: string): Promise<void> {
+    // Single-connection driver, so `USE` persists for subsequent queries.
+    const escaped = '`' + String(database).replace(/`/g, '``') + '`';
+    await this.conn.query(`USE ${escaped}`);
   }
 
   private async kill(threadId: number): Promise<void> {

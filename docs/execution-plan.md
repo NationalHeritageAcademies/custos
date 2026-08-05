@@ -75,6 +75,13 @@ The design (`docs/design/screens/`) provides 10 screens.
   `@custos/core` with 9 tests; **verified** on a real NHA `dataSources.xml`.
 - 🟡 **Component states** (1i) — grid empty/error/loading + connection-test
   states done; remaining: tree connecting/error chips, query cancel state.
+- ✅ **Connect without a database + pick one from the tree** — database is now
+  optional on Azure SQL; the tree lists every database on the server and browses
+  each one's own schemas/tables (three-part names for SQL Server, db-scoped
+  `information_schema` for MySQL). Selecting a database issues a server-side
+  `USE` so queries target it. Verified in-browser (multi-db tree) and against
+  real MySQL (13-check harness: connect with no db → list dbs → db-scoped tables
+  → `USE` shopdb/warehouse and query each).
 - ⬜ **Query history** (1h) — searchable, per connection.
 - ✅ **Live against a real database** — the real `@custos/driver-mysql` + engine are
   verified end-to-end against a running MySQL by `main/integration/mysql-live.js`

@@ -101,6 +101,36 @@ async function main() {
   );
   ok('read-only guard', 'write refused on read-only connection');
 
+  // 9. Connect to the SERVER without a database, then browse + pick one
+  await manager.saveConnection({
+    config: { id: 'srv', name: 'srv', driverId: 'mysql', readOnly: false, params: { host: HOST, port: PORT, user: USER } },
+    secrets,
+  });
+  await manager.openConnection('srv');
+  const allDbs = await manager.listDatabases('srv');
+  assert.ok(allDbs.includes('shopdb') && allDbs.includes('warehouse'), 'server lists multiple databases');
+  ok('connect without a database', `sees ${['shopdb', 'warehouse'].filter((d) => allDbs.includes(d)).join(', ')}`);
+
+  // 10. Database-scoped table listing (each db shows its own tables)
+  const shopTables = (await manager.listTables('srv', 'shopdb')).map((t) => t.name);
+  const whTables = (await manager.listTables('srv', 'warehouse')).map((t) => t.name);
+  assert.deepEqual(shopTables, ['customers', 'products'], 'shopdb tables');
+  assert.deepEqual(whTables, ['shipments'], 'warehouse tables');
+  // Each db reports its own tables — no bleed-through between databases.
+  assert.ok(!whTables.includes('products'), 'warehouse does not see shopdb tables');
+  ok('database-scoped listTables', `shopdb=[${shopTables}] warehouse=[${whTables}]`);
+
+  // 11. Selecting a database sets the query context (server-side USE)
+  await manager.setActiveDatabase('srv', 'shopdb');
+  const inShop = await manager.runQuery({ connectionId: 'srv', queryId: 'd1', sql: 'SELECT COUNT(*) AS n FROM products' });
+  assert.equal(Number(inShop.resultSets[0].rows[0][0]), 7, 'products count in shopdb');
+  ok('use shopdb, then query it', 'SELECT count(products) = 7');
+
+  await manager.setActiveDatabase('srv', 'warehouse');
+  const inWh = await manager.runQuery({ connectionId: 'srv', queryId: 'd2', sql: 'SELECT COUNT(*) AS n FROM shipments' });
+  assert.equal(Number(inWh.resultSets[0].rows[0][0]), 4, 'shipments count in warehouse');
+  ok('switch to warehouse, then query it', 'SELECT count(shipments) = 4');
+
   await manager.dispose();
   console.log(`\n${passed} checks passed against real MySQL.\n`);
 }

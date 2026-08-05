@@ -23,9 +23,16 @@ export interface DriverConnection {
   listDatabases(): Promise<string[]>;
   /** Schemas within a database; drivers without schemas return `[]`. */
   listSchemas(database?: string): Promise<string[]>;
-  listTables(schema?: string): Promise<TableRef[]>;
+  /** Tables/views, optionally scoped to a database and schema (for browsing). */
+  listTables(database?: string, schema?: string): Promise<TableRef[]>;
   getColumns(table: TableRef): Promise<ColumnMeta[]>;
   getForeignKeys(table: TableRef): Promise<ForeignKey[]>;
+  /**
+   * Set the current database for subsequent queries on this connection (the
+   * server-side `USE`). Lets a user connect to a server without picking a
+   * database up front, then choose one from the tree.
+   */
+  useDatabase(database: string): Promise<void>;
   /** Run a (possibly multi-statement) batch and return normalized results. */
   query(sql: string, options?: QueryOptions): Promise<QueryResult>;
   close(): Promise<void>;

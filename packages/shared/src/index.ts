@@ -96,9 +96,11 @@ export interface CustosApi {
 
   listDatabases(connectionId: string): Promise<string[]>;
   listSchemas(connectionId: string, database?: string): Promise<string[]>;
-  listTables(connectionId: string, schema?: string): Promise<TableRef[]>;
+  listTables(connectionId: string, database?: string, schema?: string): Promise<TableRef[]>;
   listColumns(connectionId: string, table: TableRef): Promise<ColumnMeta[]>;
   listForeignKeys(connectionId: string, table: TableRef): Promise<ForeignKey[]>;
+  /** Set the current database for subsequent queries on a connection. */
+  setActiveDatabase(connectionId: string, database: string): Promise<void>;
 
   runQuery(input: RunQueryInput): Promise<QueryResult>;
   cancelQuery(connectionId: string, queryId: string): Promise<void>;

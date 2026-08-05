@@ -48,6 +48,8 @@ export interface QueryResult {
 
 /** Reference to a table or view in the connection tree. */
 export interface TableRef {
+  /** Database the table lives in; null when the engine has no database level. */
+  readonly database?: string | null;
   readonly schema: string | null;
   readonly name: string;
   readonly kind: 'table' | 'view';
