@@ -113,8 +113,11 @@ The design (`docs/design/screens/`) provides 10 screens.
   loaded table names), Cmd+Enter / Shift+Cmd+Enter.
 - ✅ **Results depth** — multiple result-set tabs, live row Filter, sortable columns,
   Export CSV / Copy.
-- ⬜ **Virtualized grid** for 10k+ rows (rows render directly today, capped at 1000) —
-  the remaining grid follow-up; also column resize.
+- ✅ **Virtualized grid** — CDK virtual scroll (div-grid); only the visible window
+  renders (~20 of 1000). Remaining polish: column resize.
+- ✅ **Sidebar search** — real tree filter (matches show their ancestor path).
+- ✅ **Settings dialog** (titlebar gear) — appearance, max-rows limit, clear history,
+  about / no-telemetry.
 
 ## Phase 7 — Hosts, packaging & polish 🟡
 
