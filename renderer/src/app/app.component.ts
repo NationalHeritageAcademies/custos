@@ -5,6 +5,8 @@ import { ContextBarComponent } from './components/context-bar.component';
 import { ImportDialogComponent } from './components/import-dialog.component';
 import { EditorPaneComponent } from './components/editor-pane.component';
 import { EditorTabsComponent } from './components/editor-tabs.component';
+import { EditorToolbarComponent } from './components/editor-toolbar.component';
+import { HistoryPanelComponent } from './components/history-panel.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
 import { WelcomeComponent } from './components/welcome.component';
@@ -26,11 +28,13 @@ import { WorkspaceStore } from './state/workspace.store';
     ConnectionTreeComponent,
     ContextBarComponent,
     EditorTabsComponent,
+    EditorToolbarComponent,
     EditorPaneComponent,
     ResultsGridComponent,
     SafetyDialogComponent,
     ConnectionFormComponent,
     ImportDialogComponent,
+    HistoryPanelComponent,
     WelcomeComponent,
   ],
   templateUrl: './app.component.html',

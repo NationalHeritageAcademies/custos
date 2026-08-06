@@ -58,6 +58,19 @@ export interface QueryTab {
   dirty: boolean;
 }
 
+/** One entry in the query history. */
+export interface HistoryEntry {
+  id: string;
+  sql: string;
+  connectionId: string | null;
+  connectionName: string;
+  database: string | null;
+  at: number;
+  ok: boolean;
+  rowCount: number | null;
+  execMs: number | null;
+}
+
 function makeTab(title: string, sql = ''): QueryTab {
   const id = globalThis.crypto?.randomUUID?.() ?? `t${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   return { id, title, sql, result: null, rowCount: null, execMs: null, rowsAffected: null, error: null, dirty: false };
@@ -100,6 +113,10 @@ export class WorkspaceStore {
   );
 
   readonly running = signal(false);
+  /** The in-flight query, so Cancel can abort it. */
+  private readonly currentQuery = signal<{ connectionId: string; queryId: string } | null>(null);
+  /** Text currently selected in the editor (for Run selection). */
+  readonly selectionText = signal<string>('');
   // These read the ACTIVE tab, so existing templates (ws.sql(), ws.result(), …)
   // keep working unchanged while each tab holds its own state.
   readonly sql = computed(() => this.activeTab().sql);
@@ -143,6 +160,29 @@ export class WorkspaceStore {
     if (this.activeTabId() === id) {
       this.activeTabId.set((remaining[Math.max(0, idx - 1)] ?? remaining[0]!).id);
     }
+  }
+
+  // --- Query history ---
+  readonly history = signal<HistoryEntry[]>([]);
+  readonly historyOpen = signal(false);
+
+  toggleHistory(): void {
+    this.historyOpen.set(!this.historyOpen());
+  }
+  closeHistory(): void {
+    this.historyOpen.set(false);
+  }
+
+  private pushHistory(entry: HistoryEntry): void {
+    this.history.set([entry, ...this.history()].slice(0, 200));
+  }
+
+  /** Open a past query in a new tab. */
+  openHistoryEntry(entry: HistoryEntry): void {
+    const tab = makeTab('history', entry.sql);
+    this.tabs.set([...this.tabs(), tab]);
+    this.activeTabId.set(tab.id);
+    this.historyOpen.set(false);
   }
 
   /** Non-null while the guardian confirm dialog is open. */
@@ -336,22 +376,37 @@ export class WorkspaceStore {
     return out;
   });
 
-  async run(confirmDestructive = false): Promise<void> {
+  /** Run the current editor selection if there is one, else the whole tab. */
+  runSelection(): Promise<void> {
+    const sel = this.selectionText().trim();
+    return this.run({ sql: sel || undefined });
+  }
+
+  /** Cancel the in-flight query, if any. */
+  async cancel(): Promise<void> {
+    const q = this.currentQuery();
+    if (q) await this.backend.cancelQuery(q.connectionId, q.queryId);
+  }
+
+  async run(opts: { confirmDestructive?: boolean; sql?: string } = {}): Promise<void> {
     const connectionId = this.activeConnectionId() ?? this.connections()[0]?.id;
     if (!connectionId) {
       this.patchActiveTab({ error: 'No connection selected.' });
       return;
     }
+    const sql = opts.sql ?? this.sql();
+    const queryId = `q${++queryCounter}`;
     this.running.set(true);
+    this.currentQuery.set({ connectionId, queryId });
     this.patchActiveTab({ error: null });
     try {
       await this.backend.openConnection(connectionId);
       const res = await this.backend.runQuery({
         connectionId,
-        queryId: `q${++queryCounter}`,
-        sql: this.sql(),
+        queryId,
+        sql,
         maxRows: 200,
-        confirmDestructive,
+        confirmDestructive: opts.confirmDestructive,
       });
       const first = res.resultSets[0] ?? null;
       this.patchActiveTab({
@@ -364,23 +419,36 @@ export class WorkspaceStore {
       });
       this.confirm.set(null);
       this.pendingConfirmSql = null;
+      this.pushHistory({
+        id: queryId, sql, connectionId,
+        connectionName: this.activeConnection()?.name ?? connectionId,
+        database: this.activeDatabase(), at: Date.now(), ok: true,
+        rowCount: first ? first.rows.length : 0, execMs: res.executionMs,
+      });
     } catch (err) {
       const e = err as Error & { code?: string; analyses?: StatementAnalysis[] };
       if (e.code === 'CONFIRMATION_REQUIRED' && e.analyses) {
-        this.pendingConfirmSql = this.sql();
+        this.pendingConfirmSql = sql;
         this.confirm.set(e.analyses);
       } else {
         this.patchActiveTab({ error: e.message });
+        this.pushHistory({
+          id: queryId, sql, connectionId,
+          connectionName: this.activeConnection()?.name ?? connectionId,
+          database: this.activeDatabase(), at: Date.now(), ok: false,
+          rowCount: null, execMs: null,
+        });
       }
     } finally {
       this.running.set(false);
+      this.currentQuery.set(null);
     }
   }
 
   /** User accepted the guardian dialog — re-run with confirmation. */
   async confirmRun(): Promise<void> {
     if (this.pendingConfirmSql === null) return;
-    await this.run(true);
+    await this.run({ confirmDestructive: true, sql: this.pendingConfirmSql });
   }
 
   cancelConfirm(): void {

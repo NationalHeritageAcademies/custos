@@ -43,26 +43,7 @@
 
       <app-editor-tabs></app-editor-tabs>
 
-      <div style="height:42px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border)">
-        <span style="display:flex;align-items:center;gap:7px;height:27px;padding:0 11px;border-radius:6px;background:var(--accent);color:var(--on-accent);font:600 12px/1 Inter,sans-serif;box-shadow:0 1px 1px rgba(11,79,78,.25);cursor:pointer" (click)="ws.run()">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="currentColor"><path d="M3 1.5 10 6l-7 4.5Z"/></svg>Run
-          <span style="font:500 10px/1 'JetBrains Mono',monospace;opacity:.72">⌘↵</span>
-        </span>
-        <span style="display:flex;align-items:center;gap:7px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border-strong);background:var(--bg);font:500 12px/1 Inter,sans-serif;color:var(--text)">
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="var(--text-2)"><path d="M3 1.5 10 6l-7 4.5Z"/></svg>Run selection
-          <span style="font:500 10px/1 'JetBrains Mono',monospace;color:var(--text-3)">⇧⌘↵</span>
-        </span>
-        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border);font:500 12px/1 Inter,sans-serif;color:var(--text-3);opacity:.55">
-          <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg>Cancel
-        </span>
-        <span style="width:1px;height:20px;background:var(--border);margin:0 4px"></span>
-        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;font:500 12px/1 Inter,sans-serif;color:var(--text-2)">Format</span>
-        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;font:500 12px/1 Inter,sans-serif;color:var(--text-2)">Explain plan</span>
-        <div style="flex:1"></div>
-        <span style="display:flex;align-items:center;gap:6px;height:27px;padding:0 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font:500 11.5px/1 Inter,sans-serif;color:var(--text-2)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>History
-        </span>
-      </div>
+      <app-editor-toolbar></app-editor-toolbar>
 
       <app-context-bar></app-context-bar>
 
@@ -96,5 +77,6 @@
 <app-safety-dialog></app-safety-dialog>
 <app-connection-form></app-connection-form>
 <app-import-dialog></app-import-dialog>
+<app-history-panel></app-history-panel>
 @if (ws.connections().length === 0) { <app-welcome></app-welcome> }
 </div>

@@ -23,6 +23,9 @@ import { WorkspaceStore } from '../state/workspace.store';
         [value]="ws.sql()"
         (input)="onInput($event)"
         (keydown)="onKeydown($event)"
+        (select)="onSelect($event)"
+        (keyup)="onSelect($event)"
+        (mouseup)="onSelect($event)"
       ></textarea>
     </div>
   `,
@@ -44,10 +47,16 @@ export class EditorPaneComponent {
     this.ws.setSql((event.target as HTMLTextAreaElement).value);
   }
 
+  onSelect(event: Event): void {
+    const ta = event.target as HTMLTextAreaElement;
+    this.ws.selectionText.set(ta.value.substring(ta.selectionStart, ta.selectionEnd));
+  }
+
   onKeydown(event: KeyboardEvent): void {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       event.preventDefault();
-      void this.ws.run();
+      if (event.shiftKey) void this.ws.runSelection();
+      else void this.ws.run();
     }
   }
 }
