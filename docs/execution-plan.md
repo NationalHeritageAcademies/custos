@@ -114,10 +114,13 @@ The design (`docs/design/screens/`) provides 10 screens.
 - ✅ **Results depth** — multiple result-set tabs, live row Filter, sortable columns,
   Export CSV / Copy.
 - ✅ **Virtualized grid** — CDK virtual scroll (div-grid); only the visible window
-  renders (~20 of 1000). Remaining polish: column resize.
-- ✅ **Sidebar search** — real tree filter (matches show their ancestor path).
-- ✅ **Settings dialog** (titlebar gear) — appearance, max-rows limit, clear history,
-  about / no-telemetry.
+  renders (~20 of 1000). **Column resize** (drag the header edge) done.
+- ✅ **Sidebar search** — real tree filter (matches show their ancestor path); the
+  connection list scrolls when long.
+- ✅ **Settings dialog** (titlebar gear) — appearance, max-rows limit, statement
+  timeout, clear history, about / no-telemetry.
+- ✅ **Statement timeout** — engine aborts the in-flight query after the configured
+  seconds (driver cancels server-side); covered by an engine test.
 
 ## Phase 7 — Hosts, packaging & polish 🟡
 
@@ -132,8 +135,12 @@ dispatcher (`main/src/dispatch.ts`).
   `SELECT` on real rows, breadcrumb shows "Live connection").
 - ✅ **Electron host** — the desktop shell (blocked on some managed machines by
   endpoint security; see below).
-- ⬜ `electron-builder` config; signed macOS/Windows/Linux artifacts (needs a signing
-  identity to clear Gatekeeper/EDR).
+- ✅ `electron-builder` config + signed release pipeline, modeled on NHA's Envy:
+  universal mac (Developer ID + notarize via afterSign hook), Windows (Azure Trusted
+  Signing + jsign), Linux AppImage, GitHub-Releases publish, tag-triggered
+  `release.yml`. See `docs/SIGNING.md`. Runs in CI with the org secrets; first signed
+  build still to be exercised there. TODO: reconcile appId/team with Envy, confirm the
+  workspace file-set packs the drivers.
 - 🟡 **Secret storage for the web host** — currently in-memory; add an encrypted
   at-rest option (OS keychain via the desktop host is already done via `safeStorage`).
 - ⬜ Bundle Inter / JetBrains Mono locally (drop the Google Fonts request) and set a
