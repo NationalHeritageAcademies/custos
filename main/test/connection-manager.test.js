@@ -144,6 +144,41 @@ test('deleteConnection closes and removes it', async () => {
   assert.deepEqual(await manager.listConnections(), []);
 });
 
+test('statement timeout aborts a slow query', async () => {
+  // A driver whose query only settles when its abort signal fires.
+  const hangingConnection = {
+    async listDatabases() { return []; },
+    async listSchemas() { return []; },
+    async listTables() { return []; },
+    async getColumns() { return []; },
+    async getForeignKeys() { return []; },
+    async useDatabase() {},
+    query(_sql, options) {
+      return new Promise((_resolve, reject) => {
+        options.signal.addEventListener('abort', () => reject(new Error('server: query interrupted')));
+      });
+    },
+    async close() {},
+  };
+  const driver = {
+    metadata: { id: 'hang', displayName: 'Hang', iconId: 'hang' },
+    capabilities: { supportsSchemas: false, supportsTransactions: true, supportsMultipleResultSets: false, supportsCancel: true, paramStyle: 'positional', defaultPort: 0 },
+    connectionFields: [],
+    async connect() { return hangingConnection; },
+    async testConnection() { return { ok: true, message: 'ok' }; },
+  };
+  const registry = new DriverRegistry();
+  registry.register(driver);
+  const manager = new ConnectionManager(registry, new InMemoryConnectionStore(), new InMemorySecretStore());
+  await manager.saveConnection({ config: { id: 'h', name: 'h', driverId: 'hang', readOnly: false, params: {} }, secrets: {} });
+  await manager.openConnection('h');
+
+  await assert.rejects(
+    manager.runQuery({ connectionId: 'h', queryId: 'qt', sql: 'SELECT 1', timeoutMs: 20 }),
+    /exceeded the 20ms timeout/,
+  );
+});
+
 test('listDrivers advertises registered drivers', () => {
   const { manager } = newManager();
   const drivers = manager.listDrivers();

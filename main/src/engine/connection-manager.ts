@@ -1,6 +1,7 @@
 import {
   ConfirmationRequiredError,
   ConnectionError,
+  QueryError,
   ReadOnlyViolationError,
   analyzeBatch,
   firstMutatingKind,
@@ -173,13 +174,29 @@ export class ConnectionManager {
 
     const controller = new AbortController();
     this.inflight.set(input.queryId, controller);
+    // Statement timeout: abort the in-flight query, which the driver cancels
+    // server-side (KILL QUERY / request.cancel()).
+    let timedOut = false;
+    const timer =
+      input.timeoutMs && input.timeoutMs > 0
+        ? setTimeout(() => {
+            timedOut = true;
+            controller.abort();
+          }, input.timeoutMs)
+        : undefined;
     try {
       return await connection.query(input.sql, {
         signal: controller.signal,
         maxRows: input.maxRows,
         timeoutMs: input.timeoutMs,
       });
+    } catch (err) {
+      if (timedOut) {
+        throw new QueryError(`Statement cancelled: exceeded the ${input.timeoutMs}ms timeout.`, { cause: err });
+      }
+      throw err;
     } finally {
+      if (timer) clearTimeout(timer);
       this.inflight.delete(input.queryId);
     }
   }

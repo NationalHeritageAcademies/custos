@@ -258,6 +258,8 @@ export class WorkspaceStore {
   readonly settingsOpen = signal(false);
   /** Max rows fetched per query (the run cap). */
   readonly rowLimit = signal(1000);
+  /** Statement timeout in seconds; 0 = no timeout. */
+  readonly statementTimeout = signal(30);
 
   openSettings(): void {
     this.settingsOpen.set(true);
@@ -267,6 +269,9 @@ export class WorkspaceStore {
   }
   setRowLimit(n: number): void {
     this.rowLimit.set(Math.max(1, Math.min(100_000, Math.floor(n) || 1000)));
+  }
+  setStatementTimeout(seconds: number): void {
+    this.statementTimeout.set(Math.max(0, Math.min(3600, Math.floor(seconds) || 0)));
   }
   clearHistory(): void {
     this.history.set([]);
@@ -527,6 +532,7 @@ export class WorkspaceStore {
         queryId,
         sql,
         maxRows: this.rowLimit(),
+        timeoutMs: this.statementTimeout() > 0 ? this.statementTimeout() * 1000 : undefined,
         confirmDestructive: opts.confirmDestructive,
       });
       this.patchActiveTab({

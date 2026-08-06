@@ -34,6 +34,12 @@ import { ThemeService, type ThemeMode } from '../theme.service';
                 </span>
                 <input class="num" type="number" min="1" max="100000" [value]="ws.rowLimit()" (input)="ws.setRowLimit(+val($event))" />
               </label>
+              <label class="row">
+                <span class="lbl">Statement timeout
+                  <span class="hint">seconds before a query is cancelled · 0 = no limit</span>
+                </span>
+                <input class="num" type="number" min="0" max="3600" [value]="ws.statementTimeout()" (input)="ws.setStatementTimeout(+val($event))" />
+              </label>
             </div>
 
             <div class="group">

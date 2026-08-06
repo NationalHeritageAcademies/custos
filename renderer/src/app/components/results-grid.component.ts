@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import type { ColumnMeta, SqlValue } from '@custos/shared';
 import { WorkspaceStore } from '../state/workspace.store';
@@ -40,6 +40,7 @@ const ROW_H = 30;
                       @if (ws.gridSort()?.col === ci) { <span class="arrow">{{ ws.gridSort()?.dir === 'asc' ? '▲' : '▼' }}</span> }
                     </span>
                     <span class="type">{{ col.dataType }}</span>
+                    <span class="resize" title="Drag to resize" (mousedown)="startResize($event, ci)" (click)="$event.stopPropagation()"></span>
                   </div>
                 }
               </div>
@@ -73,7 +74,9 @@ const ROW_H = 30;
     .vrow:hover .cell { background: var(--grid-selection); }
     .cell { padding: 0 10px; display: flex; align-items: center; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); font: 400 12px/1 var(--font-mono); color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .cell.num { justify-content: flex-end; }
-    .hcell { font: 600 11px/1 var(--font-ui); color: var(--text-2); flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; border-bottom: 0; }
+    .hcell { position: relative; font: 600 11px/1 var(--font-ui); color: var(--text-2); flex-direction: column; align-items: flex-start; justify-content: center; gap: 3px; border-bottom: 0; }
+    .resize { position: absolute; top: 0; right: -3px; width: 7px; height: 100%; cursor: col-resize; z-index: 2; }
+    .resize:hover { background: color-mix(in srgb, var(--accent) 40%, transparent); }
     .hcell.num { align-items: flex-end; }
     .hcell.sortable { cursor: pointer; user-select: none; }
     .hcell.sortable:hover { color: var(--text); }
@@ -90,14 +93,53 @@ const ROW_H = 30;
 export class ResultsGridComponent {
   readonly ws = inject(WorkspaceStore);
   readonly rowH = ROW_H;
+  /** Per-column width overrides (from dragging); cleared when the result changes. */
+  private readonly overrides = signal<Record<number, number>>({});
 
-  private readonly widths = computed<number[]>(() => {
+  constructor() {
+    // Reset any manual widths when a new result set arrives.
+    effect(() => {
+      this.ws.result();
+      this.overrides.set({});
+    }, { allowSignalWrites: true });
+  }
+
+  private defaultWidth(col: ColumnMeta): number {
+    return this.isNumeric(col.dataType) ? 120 : 180;
+  }
+  private widthOf(index: number, col: ColumnMeta): number {
+    return this.overrides()[index] ?? this.defaultWidth(col);
+  }
+
+  readonly template = computed(() => {
     const cols = this.ws.result()?.columns ?? [];
-    return cols.map((c) => (this.isNumeric(c.dataType) ? 120 : 180));
+    return `52px ${cols.map((c, i) => `${this.widthOf(i, c)}px`).join(' ')}`;
+  });
+  readonly minWidth = computed(() => {
+    const cols = this.ws.result()?.columns ?? [];
+    return 52 + cols.reduce((sum, c, i) => sum + this.widthOf(i, c), 0);
   });
 
-  readonly template = computed(() => `52px ${this.widths().map((w) => `${w}px`).join(' ')}`);
-  readonly minWidth = computed(() => 52 + this.widths().reduce((a, b) => a + b, 0));
+  startResize(event: MouseEvent, index: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const col = this.ws.result()?.columns[index];
+    if (!col) return;
+    const startX = event.clientX;
+    const startW = this.widthOf(index, col);
+    const move = (ev: MouseEvent) => {
+      const w = Math.max(60, Math.round(startW + (ev.clientX - startX)));
+      this.overrides.set({ ...this.overrides(), [index]: w });
+    };
+    const up = () => {
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+      document.body.style.cursor = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
+  }
 
   isNumeric(dataType?: string): boolean {
     return !!dataType && NUMERIC.has(dataType.toLowerCase());
