@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ConnectionFormComponent } from './components/connection-form.component';
+import { CodeEditorComponent } from './components/code-editor.component';
 import { ConnectionTreeComponent } from './components/connection-tree.component';
 import { ContextBarComponent } from './components/context-bar.component';
 import { ImportDialogComponent } from './components/import-dialog.component';
-import { EditorPaneComponent } from './components/editor-pane.component';
 import { EditorTabsComponent } from './components/editor-tabs.component';
 import { EditorToolbarComponent } from './components/editor-toolbar.component';
 import { HistoryPanelComponent } from './components/history-panel.component';
@@ -30,7 +30,7 @@ import { WorkspaceStore } from './state/workspace.store';
     ContextBarComponent,
     EditorTabsComponent,
     EditorToolbarComponent,
-    EditorPaneComponent,
+    CodeEditorComponent,
     ResultsBarComponent,
     ResultsGridComponent,
     SafetyDialogComponent,

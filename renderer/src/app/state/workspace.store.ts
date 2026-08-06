@@ -432,6 +432,19 @@ export class WorkspaceStore {
     void this.run();
   }
 
+  /** Loaded table names across the tree — feeds editor autocomplete. */
+  readonly tableNames = computed<string[]>(() => {
+    const names = new Set<string>();
+    const walk = (nodes: TreeNode[]) => {
+      for (const n of nodes) {
+        if (n.kind === 'table') names.add(n.label);
+        if (n.children.length) walk(n.children);
+      }
+    };
+    walk(this.tree());
+    return [...names];
+  });
+
   /** Flatten the tree to the visible (expanded) nodes for rendering. */
   readonly visibleNodes = computed(() => {
     const out: TreeNode[] = [];
