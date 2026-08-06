@@ -1,10 +1,29 @@
 {
   "name": "custos-db",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Custos — keeper of your queries. A lightweight, open-source desktop database client for Azure SQL, MySQL, and more.",
   "license": "MIT",
   "author": "Custos contributors",
+  "homepage": "https://github.com/NationalHeritageAcademies/custos#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NationalHeritageAcademies/custos.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NationalHeritageAcademies/custos/issues"
+  },
+  "keywords": [
+    "database",
+    "sql",
+    "sql-client",
+    "desktop",
+    "electron",
+    "angular",
+    "mysql",
+    "azure-sql",
+    "mssql"
+  ],
   "engines": {
     "node": ">=20"
   },
