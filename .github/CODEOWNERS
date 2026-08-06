@@ -1,0 +1,14 @@
+# Code owners are auto-requested for review on PRs that touch these paths.
+# Required-review branch protection can be set to require code-owner approval.
+#
+# TODO: replace the placeholder below with your GitHub handle or a team, e.g.
+#   *  @your-github-username
+#   *  @NationalHeritageAcademies/custos-maintainers
+
+*  @NationalHeritageAcademies/custos-maintainers
+
+# Signing / release pipeline — changes here are security-sensitive.
+/electron-builder.yml          @NationalHeritageAcademies/custos-maintainers
+/scripts/                      @NationalHeritageAcademies/custos-maintainers
+/.github/workflows/            @NationalHeritageAcademies/custos-maintainers
+/build/entitlements.mac.plist  @NationalHeritageAcademies/custos-maintainers
