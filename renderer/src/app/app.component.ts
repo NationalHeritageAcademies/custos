@@ -10,6 +10,7 @@ import { HistoryPanelComponent } from './components/history-panel.component';
 import { ResultsBarComponent } from './components/results-bar.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
+import { SettingsDialogComponent } from './components/settings-dialog.component';
 import { WelcomeComponent } from './components/welcome.component';
 import { CustosClient } from './custos-client.service';
 import { ThemeService } from './theme.service';
@@ -37,6 +38,7 @@ import { WorkspaceStore } from './state/workspace.store';
     ConnectionFormComponent,
     ImportDialogComponent,
     HistoryPanelComponent,
+    SettingsDialogComponent,
     WelcomeComponent,
   ],
   templateUrl: './app.component.html',

@@ -254,6 +254,24 @@ export class WorkspaceStore {
     this.historyOpen.set(false);
   }
 
+  // --- Settings ---
+  readonly settingsOpen = signal(false);
+  /** Max rows fetched per query (the run cap). */
+  readonly rowLimit = signal(1000);
+
+  openSettings(): void {
+    this.settingsOpen.set(true);
+  }
+  closeSettings(): void {
+    this.settingsOpen.set(false);
+  }
+  setRowLimit(n: number): void {
+    this.rowLimit.set(Math.max(1, Math.min(100_000, Math.floor(n) || 1000)));
+  }
+  clearHistory(): void {
+    this.history.set([]);
+  }
+
   /** Non-null while the guardian confirm dialog is open. */
   readonly confirm = signal<StatementAnalysis[] | null>(null);
   private pendingConfirmSql: string | null = null;
@@ -445,8 +463,29 @@ export class WorkspaceStore {
     return [...names];
   });
 
-  /** Flatten the tree to the visible (expanded) nodes for rendering. */
+  /** Sidebar tree filter text. */
+  readonly treeFilter = signal('');
+  setTreeFilter(value: string): void {
+    this.treeFilter.set(value);
+  }
+
+  /** Flatten the tree for rendering — expanded nodes, or matches when filtering. */
   readonly visibleNodes = computed(() => {
+    const f = this.treeFilter().toLowerCase().trim();
+    if (f) {
+      // Include a node if it (or a loaded descendant) matches; show the matches.
+      const filter = (nodes: TreeNode[]): TreeNode[] => {
+        const out: TreeNode[] = [];
+        for (const n of nodes) {
+          const childOut = filter(n.children);
+          if (n.label.toLowerCase().includes(f) || childOut.length) {
+            out.push(n, ...childOut);
+          }
+        }
+        return out;
+      };
+      return filter(this.tree());
+    }
     const out: TreeNode[] = [];
     const walk = (nodes: TreeNode[]) => {
       for (const n of nodes) {
@@ -487,7 +526,7 @@ export class WorkspaceStore {
         connectionId,
         queryId,
         sql,
-        maxRows: 1000,
+        maxRows: this.rowLimit(),
         confirmDestructive: opts.confirmDestructive,
       });
       this.patchActiveTab({
