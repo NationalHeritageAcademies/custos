@@ -41,7 +41,7 @@ export class EditorPaneComponent {
   });
 
   onInput(event: Event): void {
-    this.ws.sql.set((event.target as HTMLTextAreaElement).value);
+    this.ws.setSql((event.target as HTMLTextAreaElement).value);
   }
 
   onKeydown(event: KeyboardEvent): void {

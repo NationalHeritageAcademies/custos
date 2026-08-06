@@ -4,6 +4,7 @@ import { ConnectionTreeComponent } from './components/connection-tree.component'
 import { ContextBarComponent } from './components/context-bar.component';
 import { ImportDialogComponent } from './components/import-dialog.component';
 import { EditorPaneComponent } from './components/editor-pane.component';
+import { EditorTabsComponent } from './components/editor-tabs.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
 import { WelcomeComponent } from './components/welcome.component';
@@ -24,6 +25,7 @@ import { WorkspaceStore } from './state/workspace.store';
   imports: [
     ConnectionTreeComponent,
     ContextBarComponent,
+    EditorTabsComponent,
     EditorPaneComponent,
     ResultsGridComponent,
     SafetyDialogComponent,

@@ -45,6 +45,24 @@ export interface TreeNode {
   children: TreeNode[];
 }
 
+/** One editor tab: its own SQL and its own results. */
+export interface QueryTab {
+  id: string;
+  title: string;
+  sql: string;
+  result: ResultSet | null;
+  rowCount: number | null;
+  execMs: number | null;
+  rowsAffected: number | null;
+  error: string | null;
+  dirty: boolean;
+}
+
+function makeTab(title: string, sql = ''): QueryTab {
+  const id = globalThis.crypto?.randomUUID?.() ?? `t${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  return { id, title, sql, result: null, rowCount: null, execMs: null, rowsAffected: null, error: null, dirty: false };
+}
+
 const DEFAULT_SQL = `-- churn cohorts, last 6 months
 WITH cohort AS (
   SELECT c.id, c.email, c.plan, c.mrr, c.region,
@@ -74,13 +92,58 @@ export class WorkspaceStore {
   /** The database queries currently run against (server-side USE), if chosen. */
   readonly activeDatabase = signal<string | null>(null);
 
-  readonly sql = signal<string>(DEFAULT_SQL);
+  // --- Editor tabs (each with its own SQL + results) ---
+  readonly tabs = signal<QueryTab[]>([makeTab('churn_cohorts.sql', DEFAULT_SQL)]);
+  readonly activeTabId = signal<string>(this.tabs()[0]!.id);
+  readonly activeTab = computed<QueryTab>(
+    () => this.tabs().find((t) => t.id === this.activeTabId()) ?? this.tabs()[0]!,
+  );
+
   readonly running = signal(false);
-  readonly result = signal<ResultSet | null>(null);
-  readonly rowCount = signal<number | null>(null);
-  readonly execMs = signal<number | null>(null);
-  readonly rowsAffected = signal<number | null>(null);
-  readonly error = signal<string | null>(null);
+  // These read the ACTIVE tab, so existing templates (ws.sql(), ws.result(), …)
+  // keep working unchanged while each tab holds its own state.
+  readonly sql = computed(() => this.activeTab().sql);
+  readonly result = computed(() => this.activeTab().result);
+  readonly rowCount = computed(() => this.activeTab().rowCount);
+  readonly execMs = computed(() => this.activeTab().execMs);
+  readonly rowsAffected = computed(() => this.activeTab().rowsAffected);
+  readonly error = computed(() => this.activeTab().error);
+
+  private patchActiveTab(patch: Partial<QueryTab>): void {
+    const id = this.activeTabId();
+    this.tabs.set(this.tabs().map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  }
+
+  setSql(value: string): void {
+    this.patchActiveTab({ sql: value, dirty: true });
+  }
+
+  newTab(): void {
+    const tab = makeTab(`query ${this.tabs().length + 1}`);
+    this.tabs.set([...this.tabs(), tab]);
+    this.activeTabId.set(tab.id);
+  }
+
+  selectTab(id: string): void {
+    this.activeTabId.set(id);
+  }
+
+  closeTab(id: string): void {
+    const tabs = this.tabs();
+    if (tabs.length <= 1) {
+      // Never leave zero tabs — reset the last one instead.
+      const fresh = makeTab('query 1');
+      this.tabs.set([fresh]);
+      this.activeTabId.set(fresh.id);
+      return;
+    }
+    const idx = tabs.findIndex((t) => t.id === id);
+    const remaining = tabs.filter((t) => t.id !== id);
+    this.tabs.set(remaining);
+    if (this.activeTabId() === id) {
+      this.activeTabId.set((remaining[Math.max(0, idx - 1)] ?? remaining[0]!).id);
+    }
+  }
 
   /** Non-null while the guardian confirm dialog is open. */
   readonly confirm = signal<StatementAnalysis[] | null>(null);
@@ -155,7 +218,7 @@ export class WorkspaceStore {
       await this.backend.setActiveDatabase(connectionId, database);
       this.activeDatabase.set(database);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : String(err));
+      this.patchActiveTab({ error: err instanceof Error ? err.message : String(err) });
     }
   }
 
@@ -181,7 +244,7 @@ export class WorkspaceStore {
       node.loaded = true;
       node.expanded = true;
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : String(err));
+      this.patchActiveTab({ error: err instanceof Error ? err.message : String(err) });
     } finally {
       node.loading = false;
       this.tree.set([...this.tree()]);
@@ -256,7 +319,7 @@ export class WorkspaceStore {
     if (node.database) await this.setActive(node.connectionId, node.database);
     else this.activeConnectionId.set(node.connectionId);
     const name = node.schema ? `${node.schema}.${node.table!.name}` : node.table!.name;
-    this.sql.set(`SELECT * FROM ${name};`);
+    this.setSql(`SELECT * FROM ${name};`);
     void this.run();
   }
 
@@ -276,11 +339,11 @@ export class WorkspaceStore {
   async run(confirmDestructive = false): Promise<void> {
     const connectionId = this.activeConnectionId() ?? this.connections()[0]?.id;
     if (!connectionId) {
-      this.error.set('No connection selected.');
+      this.patchActiveTab({ error: 'No connection selected.' });
       return;
     }
     this.running.set(true);
-    this.error.set(null);
+    this.patchActiveTab({ error: null });
     try {
       await this.backend.openConnection(connectionId);
       const res = await this.backend.runQuery({
@@ -291,10 +354,14 @@ export class WorkspaceStore {
         confirmDestructive,
       });
       const first = res.resultSets[0] ?? null;
-      this.result.set(first);
-      this.rowCount.set(first ? first.rows.length : 0);
-      this.execMs.set(res.executionMs);
-      this.rowsAffected.set(res.rowsAffected);
+      this.patchActiveTab({
+        result: first,
+        rowCount: first ? first.rows.length : 0,
+        execMs: res.executionMs,
+        rowsAffected: res.rowsAffected,
+        error: null,
+        dirty: false,
+      });
       this.confirm.set(null);
       this.pendingConfirmSql = null;
     } catch (err) {
@@ -303,7 +370,7 @@ export class WorkspaceStore {
         this.pendingConfirmSql = this.sql();
         this.confirm.set(e.analyses);
       } else {
-        this.error.set(e.message);
+        this.patchActiveTab({ error: e.message });
       }
     } finally {
       this.running.set(false);

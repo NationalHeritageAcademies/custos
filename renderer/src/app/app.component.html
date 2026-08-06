@@ -41,21 +41,7 @@
 
     <div style="flex:1;min-width:0;display:flex;flex-direction:column">
 
-      <div style="height:36px;flex:none;display:flex;align-items:stretch;background:var(--surface);border-bottom:1px solid var(--border)">
-        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--bg);border-right:1px solid var(--border);box-shadow:inset 0 2px 0 var(--accent);font:500 12px/1 Inter,sans-serif;color:var(--text)">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><path d="M6.5 3.5h7l5 5v12h-12Z"/><path d="M13 3.5v5h5"/></svg>
-          <span>churn_cohorts.sql</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" stroke="var(--text-3)" stroke-width="2.2" fill="none"><path d="M6 6l12 12M18 6 6 18"/></svg>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-right:1px solid var(--border);font:400 12px/1 Inter,sans-serif;color:var(--text-2)">
-          <span>orders_by_region.sql</span>
-          <span style="width:5px;height:5px;border-radius:50%;background:var(--warning)"></span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;padding:0 12px;border-right:1px solid var(--border);font:400 12px/1 Inter,sans-serif;color:var(--text-2);background:var(--surface-2)">
-          <span>scratch 3</span>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:center;width:32px;color:var(--text-3)"><svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 5v14M5 12h14"/></svg></div>
-      </div>
+      <app-editor-tabs></app-editor-tabs>
 
       <div style="height:42px;flex:none;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--border)">
         <span style="display:flex;align-items:center;gap:7px;height:27px;padding:0 11px;border-radius:6px;background:var(--accent);color:var(--on-accent);font:600 12px/1 Inter,sans-serif;box-shadow:0 1px 1px rgba(11,79,78,.25);cursor:pointer" (click)="ws.run()">
