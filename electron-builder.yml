@@ -1,0 +1,85 @@
+# electron-builder packaging + code-signing for Custos.
+#
+# Mirrors NHA's Envy app so this drops into the same release pipeline:
+#   - macOS: Developer ID signing + notarization via the `afterSign` hook
+#     (scripts/notarize.cjs), universal (x64 + arm64) dmg/zip.
+#   - Windows: Authenticode via Azure Trusted Signing (scripts/sign-windows.cjs
+#     + jsign) — cross-signed from the macOS runner, no Windows VM.
+#   - Linux: AppImage.
+#   - Publishes artifacts to this repo's GitHub Releases (electron-updater feed).
+#
+# Required env/secrets are documented in docs/SIGNING.md and .github/workflows/release.yml.
+appId: com.nhaschools.custos
+productName: Custos
+copyright: © 2026 National Heritage Academies
+directories:
+  output: release
+  buildResources: build
+afterSign: scripts/notarize.cjs
+publish:
+  - provider: github
+    owner: NationalHeritageAcademies
+    repo: custos
+
+# Custos is an npm-workspace monorepo (not electron-vite): the Electron main is
+# compiled to main/dist, the @custos/* packages to packages/*/dist, and the
+# Angular UI to renderer/dist. The DB drivers (mysql2, mssql) are pure JS.
+extraMetadata:
+  main: main/dist/main.js
+npmRebuild: false
+files:
+  - main/dist/**/*
+  - packages/*/dist/**/*
+  - renderer/dist/custos/browser/**/*
+  - package.json
+  - "!**/*.{map,ts,tsbuildinfo}"
+  - "!**/test/**"
+  - "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+  - "!**/node_modules/*/{test,__tests__,tests,example,examples}"
+asarUnpack:
+  - "**/*.{node,dll}"
+
+mac:
+  target:
+    - target: dmg
+      arch: universal
+    - target: zip
+      arch: universal
+  category: public.app-category.developer-tools
+  icon: build/icon.png
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  notarize: false # handled by scripts/notarize.cjs (afterSign)
+
+dmg:
+  title: Custos ${version}
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.png
+  # electron-builder 25 moved sign/hash under signtoolOptions.
+  signtoolOptions:
+    sign: scripts/sign-windows.cjs
+    signingHashAlgorithms:
+      - sha256
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+        - arm64
+  icon: build/icon.png
+  category: Development
+  maintainer: National Heritage Academies
+  vendor: National Heritage Academies

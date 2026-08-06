@@ -23,11 +23,19 @@
     "app": "npm run build && npm run app:renderer && npm run app:start",
     "app:dev": "CUSTOS_DEV_SERVER_URL=http://localhost:4200 npm run app:start",
     "web": "npm run build && npm run app:renderer && node main/dist/server.js",
-    "web:start": "node main/dist/server.js"
+    "web:start": "node main/dist/server.js",
+    "pack": "npm run build && npm run app:renderer",
+    "dist": "npm run pack && electron-builder",
+    "dist:mac": "npm run pack && electron-builder --mac",
+    "dist:win:test": "npm run pack && SKIP_WIN_SIGN=1 electron-builder --win --publish never",
+    "package:dist": "npm run pack && CUSTOS_NOTARIZE=1 electron-builder --mac --win --linux"
   },
   "devDependencies": {
+    "@electron/notarize": "^2.5.0",
     "@types/mssql": "^12.3.0",
     "@types/node": "^20.14.0",
+    "electron": "^43.3.0",
+    "electron-builder": "^25.1.8",
     "typescript": "^5.6.3"
   }
 }

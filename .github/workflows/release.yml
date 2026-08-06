@@ -1,0 +1,82 @@
+# Tag-triggered release: push a `vX.Y.Z` tag and this builds SIGNED installers
+# for macOS, Windows, and Linux from a single macOS runner (electron-builder
+# cross-builds Windows + Linux; Windows Authenticode signing goes through
+# jsign + Azure Trusted Signing, no Windows VM), and publishes them to this
+# repo's GitHub Release (the electron-updater feed).
+#
+# Mirrors NHA's Envy release pipeline. KEEP DISABLED
+# (`gh workflow disable release.yml`) until every secret below exists — a stray
+# tag would otherwise publish unsigned builds.
+#
+# Required repository secrets:
+#   CSC_LINK                      base64 of the Developer ID Application .p12
+#   CSC_KEY_PASSWORD              password for the .p12
+#   APPLE_ID                      Apple ID for notarization
+#   APPLE_APP_SPECIFIC_PASSWORD   app-specific password for notarization
+#   APPLE_TEAM_ID                 Apple Developer team ID
+#   AZURE_TENANT_ID               } service principal with the
+#   AZURE_CLIENT_ID               } "Artifact Signing Certificate Profile
+#   AZURE_CLIENT_SECRET           } Signer" role
+#   TRUSTED_SIGNING_ENDPOINT      e.g. https://eus.codesigning.azure.net
+#   TRUSTED_SIGNING_ACCOUNT       Artifact Signing account name
+#   TRUSTED_SIGNING_PROFILE       certificate profile name
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight — package version matches the tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          version="$(node -p "require('./package.json').version")"
+          if [[ "v${version}" != "${tag}" ]]; then
+            echo "::error::Tag ${tag} does not match package.json version ${version}."
+            exit 1
+          fi
+          echo "Releasing ${tag}"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install jsign (Windows signing)
+        run: brew install jsign
+
+      # Backend workspace + the standalone Angular renderer install separately.
+      - run: npm ci
+      - run: npm ci --prefix renderer
+
+      - name: Build backend + renderer
+        run: npm run pack
+
+      - name: Package, sign, notarize, and publish
+        run: npx electron-builder --mac --win --linux --publish always
+        env:
+          CUSTOS_NOTARIZE: "1"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          TRUSTED_SIGNING_ENDPOINT: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
+          TRUSTED_SIGNING_ACCOUNT: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
+          TRUSTED_SIGNING_PROFILE: ${{ secrets.TRUSTED_SIGNING_PROFILE }}

@@ -63,7 +63,8 @@ import { WorkspaceStore, type TreeNode } from '../state/workspace.store';
     </div>
   `,
   styles: [`
-    .tree { flex: 1; overflow: auto; padding: 0 6px 8px; display: flex; flex-direction: column; gap: 1px; font: var(--text-meta); }
+    :host { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    .tree { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 0 6px 8px; display: flex; flex-direction: column; gap: 1px; font: var(--text-meta); }
     .row { display: flex; align-items: center; gap: 7px; height: 27px; padding-right: 8px; border-radius: 6px; cursor: pointer; color: var(--text); white-space: nowrap; }
     .row:hover { background: var(--surface-2); }
     .row.active { background: var(--accent-subtle); box-shadow: inset 2px 0 0 var(--accent); }
