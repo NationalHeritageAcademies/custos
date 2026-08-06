@@ -30,6 +30,14 @@
     "dist:win:test": "npm run pack && SKIP_WIN_SIGN=1 electron-builder --win --publish never",
     "package:dist": "npm run pack && CUSTOS_NOTARIZE=1 electron-builder --mac --win --linux"
   },
+  "dependencies": {
+    "@custos/core": "*",
+    "@custos/shared": "*",
+    "@custos/driver-mysql": "*",
+    "@custos/driver-azuresql": "*",
+    "mysql2": "^3.11.3",
+    "mssql": "^11.0.1"
+  },
   "devDependencies": {
     "@electron/notarize": "^2.5.0",
     "@types/mssql": "^12.3.0",
