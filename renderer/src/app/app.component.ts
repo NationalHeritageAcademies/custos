@@ -7,6 +7,7 @@ import { EditorPaneComponent } from './components/editor-pane.component';
 import { EditorTabsComponent } from './components/editor-tabs.component';
 import { EditorToolbarComponent } from './components/editor-toolbar.component';
 import { HistoryPanelComponent } from './components/history-panel.component';
+import { ResultsBarComponent } from './components/results-bar.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
 import { WelcomeComponent } from './components/welcome.component';
@@ -30,6 +31,7 @@ import { WorkspaceStore } from './state/workspace.store';
     EditorTabsComponent,
     EditorToolbarComponent,
     EditorPaneComponent,
+    ResultsBarComponent,
     ResultsGridComponent,
     SafetyDialogComponent,
     ConnectionFormComponent,

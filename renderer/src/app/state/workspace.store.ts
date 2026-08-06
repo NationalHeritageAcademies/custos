@@ -45,13 +45,13 @@ export interface TreeNode {
   children: TreeNode[];
 }
 
-/** One editor tab: its own SQL and its own results. */
+/** One editor tab: its own SQL and its own result sets. */
 export interface QueryTab {
   id: string;
   title: string;
   sql: string;
-  result: ResultSet | null;
-  rowCount: number | null;
+  resultSets: ResultSet[];
+  activeResultIndex: number;
   execMs: number | null;
   rowsAffected: number | null;
   error: string | null;
@@ -73,7 +73,7 @@ export interface HistoryEntry {
 
 function makeTab(title: string, sql = ''): QueryTab {
   const id = globalThis.crypto?.randomUUID?.() ?? `t${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  return { id, title, sql, result: null, rowCount: null, execMs: null, rowsAffected: null, error: null, dirty: false };
+  return { id, title, sql, resultSets: [], activeResultIndex: 0, execMs: null, rowsAffected: null, error: null, dirty: false };
 }
 
 const DEFAULT_SQL = `-- churn cohorts, last 6 months
@@ -120,11 +120,80 @@ export class WorkspaceStore {
   // These read the ACTIVE tab, so existing templates (ws.sql(), ws.result(), …)
   // keep working unchanged while each tab holds its own state.
   readonly sql = computed(() => this.activeTab().sql);
-  readonly result = computed(() => this.activeTab().result);
-  readonly rowCount = computed(() => this.activeTab().rowCount);
+  readonly resultSets = computed(() => this.activeTab().resultSets);
+  readonly activeResultIndex = computed(() => this.activeTab().activeResultIndex);
+  readonly result = computed<ResultSet | null>(
+    () => this.activeTab().resultSets[this.activeTab().activeResultIndex] ?? null,
+  );
+  readonly rowCount = computed(() => this.result()?.rows.length ?? 0);
   readonly execMs = computed(() => this.activeTab().execMs);
   readonly rowsAffected = computed(() => this.activeTab().rowsAffected);
   readonly error = computed(() => this.activeTab().error);
+
+  selectResult(index: number): void {
+    this.patchActiveTab({ activeResultIndex: index });
+    this.resetGridView();
+  }
+
+  // --- Results grid view state (filter + sort) ---
+  readonly gridFilter = signal('');
+  readonly gridSort = signal<{ col: number; dir: 'asc' | 'desc' } | null>(null);
+
+  private resetGridView(): void {
+    this.gridFilter.set('');
+    this.gridSort.set(null);
+  }
+
+  setGridFilter(value: string): void {
+    this.gridFilter.set(value);
+  }
+
+  toggleSort(col: number): void {
+    const s = this.gridSort();
+    if (!s || s.col !== col) this.gridSort.set({ col, dir: 'asc' });
+    else if (s.dir === 'asc') this.gridSort.set({ col, dir: 'desc' });
+    else this.gridSort.set(null);
+  }
+
+  /** Rows of the active result set with the grid filter + sort applied. */
+  readonly displayedRows = computed(() => {
+    const rs = this.result();
+    if (!rs) return [];
+    let rows = rs.rows;
+    const f = this.gridFilter().toLowerCase().trim();
+    if (f) {
+      rows = rows.filter((r) => r.some((c) => c !== null && String(c).toLowerCase().includes(f)));
+    }
+    const sort = this.gridSort();
+    if (sort) {
+      rows = [...rows].sort((a, b) => {
+        const av = a[sort.col];
+        const bv = b[sort.col];
+        if (av === bv) return 0;
+        if (av === null || av === undefined) return 1;
+        if (bv === null || bv === undefined) return -1;
+        const cmp =
+          typeof av === 'number' && typeof bv === 'number'
+            ? av - bv
+            : String(av).localeCompare(String(bv), undefined, { numeric: true });
+        return sort.dir === 'asc' ? cmp : -cmp;
+      });
+    }
+    return rows;
+  });
+
+  /** The active result set as CSV (the currently displayed rows). */
+  toCsv(): string {
+    const rs = this.result();
+    if (!rs) return '';
+    const esc = (v: unknown): string => {
+      const s = v === null || v === undefined ? '' : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const header = rs.columns.map((c) => esc(c.name)).join(',');
+    const lines = this.displayedRows().map((r) => r.map(esc).join(','));
+    return [header, ...lines].join('\n');
+  }
 
   private patchActiveTab(patch: Partial<QueryTab>): void {
     const id = this.activeTabId();
@@ -405,25 +474,25 @@ export class WorkspaceStore {
         connectionId,
         queryId,
         sql,
-        maxRows: 200,
+        maxRows: 1000,
         confirmDestructive: opts.confirmDestructive,
       });
-      const first = res.resultSets[0] ?? null;
       this.patchActiveTab({
-        result: first,
-        rowCount: first ? first.rows.length : 0,
+        resultSets: res.resultSets,
+        activeResultIndex: 0,
         execMs: res.executionMs,
         rowsAffected: res.rowsAffected,
         error: null,
         dirty: false,
       });
+      this.resetGridView();
       this.confirm.set(null);
       this.pendingConfirmSql = null;
       this.pushHistory({
         id: queryId, sql, connectionId,
         connectionName: this.activeConnection()?.name ?? connectionId,
         database: this.activeDatabase(), at: Date.now(), ok: true,
-        rowCount: first ? first.rows.length : 0, execMs: res.executionMs,
+        rowCount: res.resultSets[0]?.rows.length ?? 0, execMs: res.executionMs,
       });
     } catch (err) {
       const e = err as Error & { code?: string; analyses?: StatementAnalysis[] };

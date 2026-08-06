@@ -32,16 +32,20 @@ const NUMERIC = new Set(['int', 'bigint', 'smallint', 'tinyint', 'decimal', 'flo
             <thead>
               <tr>
                 <th class="num gutter">#</th>
-                @for (col of rs.columns; track $index) {
-                  <th [class.num]="isNumeric(col.dataType)">
-                    {{ col.name }}
+                @for (col of rs.columns; track $index; let ci = $index) {
+                  <th class="sortable" [class.num]="isNumeric(col.dataType)" (click)="ws.toggleSort(ci)">
+                    <span class="hname">{{ col.name }}
+                      @if (ws.gridSort()?.col === ci) {
+                        <span class="arrow">{{ ws.gridSort()?.dir === 'asc' ? '▲' : '▼' }}</span>
+                      }
+                    </span>
                     <span class="type">{{ col.dataType }}</span>
                   </th>
                 }
               </tr>
             </thead>
             <tbody>
-              @for (row of rs.rows; track $index; let i = $index) {
+              @for (row of ws.displayedRows(); track $index; let i = $index) {
                 <tr [class.zebra]="i % 2 === 1">
                   <td class="num gutter">{{ i + 1 }}</td>
                   @for (cell of row; track $index) {
@@ -54,6 +58,8 @@ const NUMERIC = new Set(['int', 'bigint', 'smallint', 'tinyint', 'decimal', 'flo
                     </td>
                   }
                 </tr>
+              } @empty {
+                <tr><td class="norows" [attr.colspan]="rs.columns.length + 1">No rows match the filter.</td></tr>
               }
             </tbody>
           </table>
@@ -72,6 +78,11 @@ const NUMERIC = new Set(['int', 'bigint', 'smallint', 'tinyint', 'decimal', 'flo
     table { border-collapse: collapse; width: max-content; min-width: 100%; font: var(--text-body); font-family: var(--font-mono); }
     thead th { position: sticky; top: 0; z-index: 1; background: var(--grid-header-bg); color: var(--text-2); font: 600 11px/1 var(--font-ui); text-align: left; padding: 8px 10px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border-strong); white-space: nowrap; }
     thead th.num { text-align: right; }
+    thead th.sortable { cursor: pointer; user-select: none; }
+    thead th.sortable:hover { color: var(--text); }
+    .hname { display: inline-flex; align-items: center; gap: 4px; }
+    .arrow { font-size: 8px; color: var(--accent); }
+    .norows { padding: 16px 12px; text-align: center; color: var(--text-3); font-family: var(--font-ui); }
     thead .type { display: block; font: 400 9.5px/1 var(--font-mono); color: var(--text-3); margin-top: 3px; font-weight: 400; }
     tbody td { padding: 7px 10px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); color: var(--text); white-space: nowrap; }
     tbody td.num { text-align: right; }
