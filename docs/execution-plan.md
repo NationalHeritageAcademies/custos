@@ -102,13 +102,19 @@ The design (`docs/design/screens/`) provides 10 screens.
   IPC↔UI shim is thin and already proven via the in-browser demo of the same
   `CustosApi`).
 
-## Phase 6 — Editor & grid depth ⬜
+## Phase 6 — Editor & grid depth 🟡
 
-- ⬜ **Monaco** SQL editor with schema-aware autocomplete; Monaco theme mapped to the
-  `--syn-*` tokens.
-- ⬜ **Virtualized results grid** (CDK virtual scroll) for 10k+ rows; sort, resize,
-  copy-as CSV/TSV/JSON, export.
-- ⬜ Cancel button wired to `cancelQuery`; run/run-selection keyboard shortcuts.
+- ✅ **Real editor tabs** — create / switch / close, each with its own SQL + results.
+- ✅ **Editor toolbar** — Run, Run selection (runs the editor selection), Cancel
+  (aborts the in-flight query), History.
+- ✅ **Query history (1h)** — searchable per-session history; click to reopen in a tab.
+- ✅ **Monaco** SQL editor — highlighting via custom light/dark themes from the
+  `--syn-*` tokens (follows the app theme), schema-aware autocomplete (keywords +
+  loaded table names), Cmd+Enter / Shift+Cmd+Enter.
+- ✅ **Results depth** — multiple result-set tabs, live row Filter, sortable columns,
+  Export CSV / Copy.
+- ⬜ **Virtualized grid** for 10k+ rows (rows render directly today, capped at 1000) —
+  the remaining grid follow-up; also column resize.
 
 ## Phase 7 — Hosts, packaging & polish 🟡
 
