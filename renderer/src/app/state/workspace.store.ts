@@ -117,6 +117,8 @@ export class WorkspaceStore {
   private readonly currentQuery = signal<{ connectionId: string; queryId: string } | null>(null);
   /** Text currently selected in the editor (for Run selection). */
   readonly selectionText = signal<string>('');
+  /** Caret position in the editor (1-based), shown in the status bar. */
+  readonly cursor = signal<{ line: number; column: number }>({ line: 1, column: 1 });
   // These read the ACTIVE tab, so existing templates (ws.sql(), ws.result(), …)
   // keep working unchanged while each tab holds its own state.
   readonly sql = computed(() => this.activeTab().sql);

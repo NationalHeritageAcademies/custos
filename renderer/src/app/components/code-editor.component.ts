@@ -94,6 +94,8 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
     this.editor.onDidChangeCursorSelection(() => {
       const sel = this.editor!.getSelection();
       this.ws.selectionText.set(sel ? this.editor!.getModel()!.getValueInRange(sel) : '');
+      const pos = this.editor!.getPosition();
+      if (pos) this.ws.cursor.set({ line: pos.lineNumber, column: pos.column });
     });
 
     this.editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => void this.ws.run());
