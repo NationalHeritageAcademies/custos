@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { AzureSqlDriver, buildConfig } = require('../dist/index.js');
+const { AzureSqlDriver, buildConfig, assertRequiredSecrets } = require('../dist/index.js');
 
 const base = (params) => ({ id: 'x', name: 'x', driverId: 'azuresql', readOnly: false, params });
 
@@ -37,4 +37,44 @@ test('azure ad token auth uses the access-token authentication type', () => {
   const cfg = buildConfig(base({ server: 'h', authMode: 'azuread-token' }), { accessToken: 'tok' });
   assert.equal(cfg.authentication.type, 'azure-active-directory-access-token');
   assert.equal(cfg.authentication.options.token, 'tok');
+});
+
+test('assertRequiredSecrets rejects NTLM without a password (the crash repro)', () => {
+  assert.throws(
+    () => assertRequiredSecrets(base({ server: 'h', authMode: 'ntlm', user: 'svc', domain: 'CORP' }), {}),
+    /password is missing/i,
+  );
+});
+
+test('assertRequiredSecrets rejects SQL/NTLM without a user', () => {
+  assert.throws(
+    () => assertRequiredSecrets(base({ server: 'h', authMode: 'sql' }), { password: 'p' }),
+    /user name is missing/i,
+  );
+});
+
+test('assertRequiredSecrets rejects azure-ad-token without a token', () => {
+  assert.throws(
+    () => assertRequiredSecrets(base({ server: 'h', authMode: 'azuread-token' }), {}),
+    /access token is missing/i,
+  );
+});
+
+test('assertRequiredSecrets passes when the required secrets are present', () => {
+  assert.doesNotThrow(() =>
+    assertRequiredSecrets(base({ server: 'h', authMode: 'ntlm', user: 'svc', domain: 'CORP' }), { password: 's3cret' }),
+  );
+  assert.doesNotThrow(() =>
+    assertRequiredSecrets(base({ server: 'h', authMode: 'azuread-token' }), { accessToken: 'tok' }),
+  );
+});
+
+test('testConnection fails cleanly (no throw) when a required secret is missing', async () => {
+  const driver = new AzureSqlDriver();
+  const result = await driver.testConnection(
+    { driverId: 'azuresql', params: { server: 'h', authMode: 'ntlm', user: 'svc', domain: 'CORP' } },
+    {},
+  );
+  assert.equal(result.ok, false);
+  assert.match(result.message, /password is missing/i);
 });
