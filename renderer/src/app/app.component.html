@@ -26,14 +26,13 @@
         <div style="display:flex;align-items:center;gap:7px;height:27px;padding:0 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text-3)" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4.3-4.3"/></svg>
           <input style="flex:1;min-width:0;border:0;outline:none;background:transparent;font:400 12px/1 Inter,sans-serif;color:var(--text)" placeholder="Search connections…" [value]="ws.treeFilter()" (input)="ws.setTreeFilter($any($event.target).value)" />
-          <span style="font:500 9.5px/1 'JetBrains Mono',monospace;color:var(--text-3);padding:2px 4px;border:1px solid var(--border);border-radius:3px">⌘P</span>
         </div>
       </div>
 
       <app-connection-tree></app-connection-tree>
       <div style="display:flex;align-items:center;gap:8px;height:32px;flex:none;padding:0 12px;border-top:1px solid var(--border);font:400 11px/1 Inter,sans-serif;color:var(--text-3)">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></svg>
-        <span>4 connections · 2 active</span>
+        <span>{{ ws.connections().length }} {{ ws.connections().length === 1 ? "connection" : "connections" }}</span>
       </div>
     </div>
 
@@ -59,7 +58,7 @@
         <span style="color:var(--border-strong)">|</span><span>fetched {{ ws.fetched() }} of {{ ws.rowCount() ?? 0 }}{{ ws.truncated() ? " · scroll to load" : "" }}</span>
         <div style="flex:1"></div>
         <span>{{ ws.activeConnection()?.name ?? "—" }}@if (ws.activeDatabase()) { / {{ ws.activeDatabase() }} }</span>
-        <span style="color:var(--border-strong)">|</span><span>Ln 6, Col 62</span>
+        <span style="color:var(--border-strong)">|</span><span>Ln {{ ws.cursor().line }}, Col {{ ws.cursor().column }}</span>
         <span style="color:var(--border-strong)">|</span><span>UTF-8</span>
       </div>
     </div>
