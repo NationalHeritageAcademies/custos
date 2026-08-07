@@ -143,12 +143,27 @@ dispatcher (`main/src/dispatch.ts`).
   workspace file-set packs the drivers.
 - 🟡 **Secret storage for the web host** — currently in-memory; add an encrypted
   at-rest option (OS keychain via the desktop host is already done via `safeStorage`).
-- ⬜ Bundle Inter / JetBrains Mono locally (drop the Google Fonts request) and set a
-  strict `Content-Security-Policy`.
+- ✅ **Local fonts + strict CSP** — Inter / JetBrains Mono are bundled via
+  `@fontsource-variable/*` (no Google Fonts request); a strict `Content-Security-Policy`
+  ships as a `<meta>` (Electron `file://`) and as an HTTP header from the web host (which
+  also adds `frame-ancestors`, `X-Frame-Options`, `nosniff`, `Referrer-Policy`). No
+  `unsafe-eval`; `script-src` is `'self'` only. Critical-CSS inlining is disabled so no
+  inline `onload` handler is emitted, and web-host mode is flagged by an injected `<meta>`
+  rather than an inline `<script>`. **Verified in-browser:** Monaco, fonts, and `/api` all
+  work with zero CSP violations.
 - ⬜ App icon set from the guardian shield.
 
 ## Immediate next step
 
-Two good directions: **query history (1h)** (last unbuilt design screen), or deepen
-the editor (Monaco + schema autocomplete, Phase 6). The web host means the app is now
-fully usable against real databases without the desktop shell.
+**v0.1.0 is released** — signed macOS/Windows/Linux installers + the electron-updater
+feed are public, and the release pipeline auto-publishes on tag (notes-gated). Remaining
+hardening/robustness, roughly in priority order:
+
+- **Web host resilience** — a driver connect error (e.g. a saved NTLM connection missing
+  its in-memory password after a restart) currently escapes the dispatcher's `try/catch`
+  and crashes the Node server. Guard the connect path and add a process-level backstop so
+  one bad connection can't take down the host.
+- **Row streaming for `maxRows`** (Phase 2) — both drivers still fetch-then-truncate; stop
+  fetching once the cap is hit. Needs live testing on MySQL *and* Azure SQL.
+- **Component states** (1i) — tree connecting/error chips, query-cancel state.
+- **Encrypted-at-rest secrets for the web host** (Phase 7).

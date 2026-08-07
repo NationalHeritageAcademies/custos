@@ -63,6 +63,22 @@ function readBody(req: http.IncomingMessage): Promise<string> {
   });
 }
 
+// Security headers for the served document. The CSP mirrors the <meta> baked
+// into index.html (which is what protects the Electron file:// load, where
+// there are no HTTP headers) and additionally sets frame-ancestors, which a
+// <meta> CSP cannot. The web host is localhost-only, but this keeps a stray
+// browser tab from framing it or sniffing content types.
+const SECURITY_HEADERS: http.OutgoingHttpHeaders = {
+  'Content-Security-Policy':
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+    "font-src 'self'; img-src 'self' data:; connect-src 'self'; " +
+    "worker-src 'self' blob:; object-src 'none'; base-uri 'self'; " +
+    "form-action 'none'; frame-ancestors 'none'",
+  'X-Frame-Options': 'DENY',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+};
+
 /** Serve a static file from the renderer build; inject the web-mode flag into index.html. */
 function serveStatic(urlPath: string, res: http.ServerResponse): void {
   const rel = urlPath === '/' ? 'index.html' : decodeURIComponent(urlPath.replace(/^\/+/, ''));
@@ -82,10 +98,12 @@ function serveStatic(urlPath: string, res: http.ServerResponse): void {
     }
     const ext = path.extname(filePath).toLowerCase();
     if (ext === '.html') {
+      // Mark web-host mode with a <meta> tag rather than an inline <script>,
+      // so the strict `script-src 'self'` CSP needs no inline-script exception.
       const html = data
         .toString('utf8')
-        .replace('</head>', '<script>window.__CUSTOS_HTTP__=true</script></head>');
-      res.writeHead(200, { 'Content-Type': MIME['.html']! }).end(html);
+        .replace('</head>', '<meta name="custos-host" content="http"></head>');
+      res.writeHead(200, { 'Content-Type': MIME['.html']!, ...SECURITY_HEADERS }).end(html);
       return;
     }
     res.writeHead(200, { 'Content-Type': MIME[ext] ?? 'application/octet-stream' }).end(data);
