@@ -1,8 +1,16 @@
 # Tag-triggered release: push a `vX.Y.Z` tag and this builds SIGNED installers
 # for macOS, Windows, and Linux from a single macOS runner (electron-builder
 # cross-builds Windows + Linux; Windows Authenticode signing goes through
-# jsign + Azure Trusted Signing, no Windows VM), and publishes them to this
-# repo's GitHub Release (the electron-updater feed).
+# jsign + Azure Trusted Signing, no Windows VM), attaches them to this repo's
+# GitHub Release (the electron-updater feed), and publishes it with the notes
+# committed at `release-notes/<tag>.md`.
+#
+# The notes are part of the release, not an afterthought: they're written and
+# reviewed alongside the version bump, and the preflight below refuses to build
+# without them. That check runs FIRST so a tag with no notes fails in seconds
+# rather than after a ~20 minute signed build. electron-builder uploads to a
+# DRAFT release; the final step flips it to published+latest only if packaging
+# succeeded, so a half-built release is never made public.
 #
 # Mirrors NHA's Envy release pipeline. KEEP DISABLED
 # (`gh workflow disable release.yml`) until every secret below exists — a stray
@@ -37,17 +45,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Preflight — package version matches the tag
+      # Everything that can invalidate the release is checked before the
+      # expensive part runs: missing notes, and a package.json version that
+      # disagrees with the tag (which would ship assets named for a different
+      # version than the release they hang off).
+      - name: Preflight — notes present and version matches the tag
         shell: bash
         run: |
           set -euo pipefail
           tag="${GITHUB_REF_NAME}"
+          notes="release-notes/${tag}.md"
+
+          if [[ ! -s "${notes}" ]]; then
+            echo "::error::Missing ${notes}. Write the release notes, commit them, and re-tag."
+            exit 1
+          fi
+          if [[ -z "$(head -n 1 "${notes}" | tr -d '[:space:]')" ]]; then
+            echo "::error::${notes} must start with the release title on line 1, then a blank line, then the body."
+            exit 1
+          fi
+
           version="$(node -p "require('./package.json').version")"
           if [[ "v${version}" != "${tag}" ]]; then
             echo "::error::Tag ${tag} does not match package.json version ${version}."
             exit 1
           fi
-          echo "Releasing ${tag}"
+
+          echo "Releasing ${tag} — $(head -n 1 "${notes}")"
 
       - uses: actions/setup-node@v4
         with:
@@ -64,7 +88,7 @@ jobs:
       - name: Build backend + renderer
         run: npm run pack
 
-      - name: Package, sign, notarize, and publish
+      - name: Package, sign, notarize, and upload to draft release
         run: npx electron-builder --mac --win --linux --publish always
         env:
           CUSTOS_NOTARIZE: "1"
@@ -80,3 +104,29 @@ jobs:
           TRUSTED_SIGNING_ENDPOINT: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
           TRUSTED_SIGNING_ACCOUNT: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
           TRUSTED_SIGNING_PROFILE: ${{ secrets.TRUSTED_SIGNING_PROFILE }}
+
+      # electron-builder leaves a draft titled after the version with an empty
+      # body. Swap in the committed notes — line 1 is the title, the rest is the
+      # body — and publish. Runs only if packaging succeeded, so a half-built
+      # release is never made public.
+      - name: Publish the release with its notes
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME}"
+          notes="release-notes/${tag}.md"
+
+          title="$(head -n 1 "${notes}")"
+          body="$(mktemp)"
+          # Drop line 1 and any blank lines that followed it.
+          tail -n +2 "${notes}" | sed '/./,$!d' > "${body}"
+
+          gh release edit "${tag}" \
+            --title "${title}" \
+            --notes-file "${body}" \
+            --draft=false \
+            --latest
+
+          echo "Published: $(gh release view "${tag}" --json url --jq .url)"
