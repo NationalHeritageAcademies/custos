@@ -131,6 +131,42 @@ async function main() {
   assert.equal(Number(inWh.resultSets[0].rows[0][0]), 4, 'shipments count in warehouse');
   ok('switch to warehouse, then query it', 'SELECT count(shipments) = 4');
 
+  // 12. Streaming a capped SELECT stops fetching early. Build a large table so
+  // the cap is far below the row count, read with a small maxRows, and confirm
+  // we get exactly the cap, the truncated flag, and the right rows in order —
+  // and that the connection is healthy afterwards (early stream teardown must
+  // not desync the protocol). The table is dropped again so re-runs against the
+  // same server keep shopdb's table list pristine.
+  await manager.runQuery({ connectionId: 'shop', queryId: 'sc0', sql: 'DROP TABLE IF EXISTS stream_big', confirmDestructive: true });
+  await manager.runQuery({ connectionId: 'shop', queryId: 'sc', sql: 'CREATE TABLE stream_big (id INT AUTO_INCREMENT PRIMARY KEY, val VARCHAR(32))' });
+  await manager.runQuery({ connectionId: 'shop', queryId: 'si', sql: "INSERT INTO stream_big (val) VALUES ('x')" });
+  for (let i = 0; i < 16; i++) {
+    await manager.runQuery({ connectionId: 'shop', queryId: `sd${i}`, sql: 'INSERT INTO stream_big (val) SELECT val FROM stream_big' });
+  }
+  const totalRows = Number(
+    (await manager.runQuery({ connectionId: 'shop', queryId: 'st', sql: 'SELECT COUNT(*) AS n FROM stream_big' })).resultSets[0].rows[0][0],
+  );
+  // Authoritative first-5 via a buffered LIMIT query (ids may be non-contiguous:
+  // MySQL 8 leaves auto-increment gaps for bulk INSERT ... SELECT).
+  const expectedFirst5 = (
+    await manager.runQuery({ connectionId: 'shop', queryId: 'se', sql: 'SELECT id FROM stream_big ORDER BY id LIMIT 5' })
+  ).resultSets[0].rows.map((r) => Number(r[0]));
+  const bigCapped = await manager.runQuery({ connectionId: 'shop', queryId: 'sb', sql: 'SELECT id FROM stream_big ORDER BY id', maxRows: 5 });
+  assert.equal(bigCapped.resultSets[0].rows.length, 5, 'streamed exactly maxRows (5) rows');
+  assert.equal(bigCapped.resultSets[0].truncated, true, 'truncated flag is set');
+  assert.deepEqual(bigCapped.resultSets[0].rows.map((r) => Number(r[0])), expectedFirst5, 'streamed the correct first 5 rows, in order');
+  const afterStream = await manager.runQuery({ connectionId: 'shop', queryId: 'sa', sql: 'SELECT 123 AS x' });
+  assert.equal(Number(afterStream.resultSets[0].rows[0][0]), 123, 'connection healthy after early stream stop');
+  await manager.runQuery({ connectionId: 'shop', queryId: 'scz', sql: 'DROP TABLE IF EXISTS stream_big', confirmDestructive: true });
+  ok('streaming cap + early stop', `capped 5 of ${totalRows} rows, truncated, connection reused cleanly`);
+
+  // 13. Multi-statement batches still take the buffered path (two result sets).
+  const multi = await manager.runQuery({ connectionId: 'shop', queryId: 'ms', sql: 'SELECT 1 AS a; SELECT 2 AS b', maxRows: 10 });
+  assert.equal(multi.resultSets.length, 2, 'two result sets from a multi-statement batch');
+  assert.equal(Number(multi.resultSets[0].rows[0][0]), 1);
+  assert.equal(Number(multi.resultSets[1].rows[0][0]), 2);
+  ok('multi-statement (buffered path)', 'two result sets: 1, 2');
+
   await manager.dispose();
   console.log(`\n${passed} checks passed against real MySQL.\n`);
 }
