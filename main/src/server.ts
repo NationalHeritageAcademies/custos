@@ -111,6 +111,22 @@ function serveStatic(urlPath: string, res: http.ServerResponse): void {
 }
 
 function main(): void {
+  // Last-resort guards. A driver (or one of its dependencies) can throw
+  // asynchronously outside any request's await chain — tedious, for instance,
+  // can throw during its login handshake. On a localhost dev tool it is far
+  // better to log and keep serving than to let one bad connection take the whole
+  // host down. The request that triggered it still fails or times out; the
+  // server survives for every other tab. (Driver inputs are validated up front,
+  // so this should rarely fire — it is a backstop, not the primary defense.)
+  process.on('uncaughtException', (err) => {
+    // eslint-disable-next-line no-console
+    console.error('[custos] Uncaught exception — server kept alive:', err);
+  });
+  process.on('unhandledRejection', (reason) => {
+    // eslint-disable-next-line no-console
+    console.error('[custos] Unhandled rejection — server kept alive:', reason);
+  });
+
   const dispatch = createDispatcher(buildManager());
 
   const server = http.createServer(async (req, res) => {

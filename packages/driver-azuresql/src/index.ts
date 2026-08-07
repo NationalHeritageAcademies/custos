@@ -118,6 +118,46 @@ export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets
   return { ...base, user: p.user ? String(p.user) : undefined, password: secrets.password };
 }
 
+/** Human-readable label for an auth mode, used in error messages. */
+function authModeLabel(mode: string): string {
+  switch (mode) {
+    case 'ntlm':
+      return 'Windows (NTLM) authentication';
+    case 'azuread-token':
+      return 'Azure AD token authentication';
+    default:
+      return 'SQL login';
+  }
+}
+
+/**
+ * Fail fast with a clear message when the secrets an auth mode needs are absent,
+ * instead of handing tedious an undefined password. With NTLM that would throw
+ * deep in the login handshake (`ERR_INVALID_ARG_TYPE`) on a code path that
+ * escapes the awaited `connect()` and crashes the host process. The web host
+ * keeps secrets in memory only, so a saved connection loses its password across
+ * restarts — this turns that into a friendly "re-enter it" rather than a crash.
+ *
+ * Exported for direct unit testing (no network required).
+ */
+export function assertRequiredSecrets(config: ConnectionConfig, secrets: ConnectionSecrets): void {
+  const mode = String(config.params.authMode ?? 'sql');
+  const missing = (field: string): never => {
+    throw new ConnectionError(
+      `This Azure SQL connection uses ${authModeLabel(mode)} but its ${field} is missing. ` +
+        `Re-enter it in the connection form and try again. ` +
+        `(The web host keeps secrets in memory only, so they are cleared when it restarts.)`,
+    );
+  };
+  if (mode === 'azuread-token') {
+    if (!secrets.accessToken) missing('access token');
+    return;
+  }
+  // SQL login and NTLM both authenticate with a user + password.
+  if (!config.params.user) missing('user name');
+  if (!secrets.password) missing('password');
+}
+
 /** Quote a SQL Server identifier: [name], with ] doubled. */
 function bracket(name: string): string {
   return '[' + name.replace(/]/g, ']]') + ']';
@@ -307,6 +347,7 @@ export class AzureSqlDriver implements DatabaseDriver {
   readonly connectionFields = CONNECTION_FIELDS;
 
   async connect(config: ConnectionConfig, secrets: ConnectionSecrets): Promise<DriverConnection> {
+    assertRequiredSecrets(config, secrets);
     try {
       const pool = new sql.ConnectionPool(buildConfig(config, secrets));
       await pool.connect();
@@ -323,6 +364,7 @@ export class AzureSqlDriver implements DatabaseDriver {
     const start = Date.now();
     let pool: sql.ConnectionPool | undefined;
     try {
+      assertRequiredSecrets(config, secrets);
       pool = new sql.ConnectionPool(buildConfig(config, secrets));
       await pool.connect();
       const result = await pool.request().query<{ v: string }>('SELECT @@VERSION AS v');
