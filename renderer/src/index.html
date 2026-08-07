@@ -7,10 +7,18 @@
   <base href="./">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/svg+xml" href="custos-mark.svg">
-  <!-- TODO: bundle these fonts locally for offline use (docs/execution-plan.md). -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!--
+    Strict CSP. Custos makes no outbound calls except to the databases you
+    configure (over IPC/localhost, not the page), so everything is same-origin.
+    - style-src 'unsafe-inline': Angular and Monaco inject their styles as
+      <style> elements at runtime; there is no external stylesheet.
+    - worker-src blob:: Monaco's editor spins up its worker from a blob URL.
+    - No 'unsafe-eval': the production build is AOT, so nothing evaluates strings.
+    Fonts are now bundled locally (@fontsource-variable/*), so no font CDN.
+  -->
+  <!-- frame-ancestors is intentionally omitted: it is ignored in a <meta> CSP.
+       The web host sets it (and X-Frame-Options) as an HTTP header instead. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
 </head>
 <body>
   <app-root></app-root>

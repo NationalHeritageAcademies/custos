@@ -52,6 +52,8 @@
               }
             ],
             "styles": [
+              "node_modules/@fontsource-variable/inter/index.css",
+              "node_modules/@fontsource-variable/jetbrains-mono/index.css",
               "src/styles/tokens.css",
               "src/styles.css",
               "node_modules/monaco-editor/min/vs/editor/editor.main.css"
@@ -75,7 +77,15 @@
                   "maximumError": "120kb"
                 }
               ],
-              "outputHashing": "all"
+              "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                }
+              }
             },
             "development": {
               "optimization": false,
