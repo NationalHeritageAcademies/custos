@@ -3,6 +3,9 @@ import {
   ConnectionError,
   QueryError,
   emptyResultSet,
+  firstKeyword,
+  splitStatements,
+  stripSqlComments,
   toResultSet,
   type ColumnMeta,
   type ConnectionConfig,
@@ -16,9 +19,49 @@ import {
   type QueryOptions,
   type QueryResult,
   type ResultSet,
+  type SqlValue,
   type TableRef,
   type TestConnectionResult,
 } from '@custos/core';
+
+// Statements safe to stream row-by-row with an early stop: each always produces
+// a result set, so mysql2's row stream emits `fields`/`end` and never hangs (an
+// OK-packet statement — DML/DDL/`SET`, or a `SELECT … INTO` — would stall a row
+// stream, so those take the buffered path). `with` is excluded because a CTE can
+// front a writing statement (`WITH … INSERT/UPDATE`) that returns no result set.
+const STREAMABLE_KEYWORDS = new Set(['select', 'show', 'describe', 'desc', 'explain']);
+
+// The row-stream / event API lives on mysql2's callback connection, not the
+// promise wrapper. These are the only members the streaming path touches.
+interface RowStream {
+  on(event: 'data', cb: (row: Record<string, unknown>) => void): RowStream;
+  on(event: 'end', cb: () => void): RowStream;
+  on(event: 'error', cb: (err: Error) => void): RowStream;
+  destroy(): void;
+}
+interface RawQuery {
+  on(event: 'fields', cb: (fields: mysql.FieldPacket[]) => void): RawQuery;
+  stream(): RowStream;
+}
+interface RawConnection {
+  query(opts: { sql: string; values?: unknown[] }): RawQuery;
+}
+
+/**
+ * Whether a query should be streamed with an early stop rather than buffered.
+ * Only a single, capped, result-set-returning statement qualifies. Exported for
+ * unit testing. See {@link STREAMABLE_KEYWORDS} for why the set is conservative.
+ */
+export function canStreamSelect(sql: string, maxRows: number | undefined): boolean {
+  if (!maxRows || maxRows <= 0) return false; // no cap → nothing to stop early for
+  const statements = splitStatements(sql);
+  if (statements.length !== 1) return false; // multi-statement → buffered
+  const only = statements[0]!;
+  if (!STREAMABLE_KEYWORDS.has(firstKeyword(only))) return false;
+  // `SELECT … INTO @var / OUTFILE` returns no result set → would hang a stream.
+  if (/\binto\b/i.test(stripSqlComments(only))) return false;
+  return true;
+}
 
 const METADATA: DriverMetadata = {
   id: 'mysql',
@@ -193,6 +236,87 @@ class MySqlConnection implements DriverConnection {
 
   async query(sql: string, options: QueryOptions = {}): Promise<QueryResult> {
     const start = Date.now();
+    // A single capped SELECT streams and stops fetching once the cap is hit,
+    // instead of pulling the whole result set into memory and then truncating.
+    if (canStreamSelect(sql, options.maxRows)) {
+      return this.queryStreaming(sql, options, start);
+    }
+    return this.queryBuffered(sql, options, start);
+  }
+
+  /**
+   * Stream a single result-set statement, keeping at most `maxRows` rows and
+   * destroying the stream as soon as one more arrives (which stops MySQL sending
+   * the rest). Only reached via {@link canStreamSelect}, so the stream always
+   * terminates. Peak memory is bounded to ~`maxRows` rows regardless of table
+   * size.
+   */
+  private queryStreaming(sql: string, options: QueryOptions, start: number): Promise<QueryResult> {
+    const cap = options.maxRows && options.maxRows > 0 ? options.maxRows : Infinity;
+    const threadId = (this.conn as unknown as { threadId?: number }).threadId;
+
+    return new Promise<QueryResult>((resolve, reject) => {
+      let columns: ColumnMeta[] = [];
+      const rowObjects: Record<string, unknown>[] = [];
+      let truncated = false;
+      let settled = false;
+      let onAbort: (() => void) | undefined;
+
+      const raw = (this.conn as unknown as { connection: RawConnection }).connection;
+      const query = raw.query({
+        sql,
+        values: Array.isArray(options.params) ? options.params : undefined,
+      });
+      const stream = query.stream();
+
+      const settle = (fn: () => void): void => {
+        if (settled) return;
+        settled = true;
+        if (options.signal && onAbort) options.signal.removeEventListener('abort', onAbort);
+        fn();
+      };
+      const done = (): void => {
+        const rows: SqlValue[][] = rowObjects.map((obj) =>
+          columns.map((col) => (obj[col.name] ?? null) as SqlValue),
+        );
+        settle(() =>
+          resolve({
+            resultSets: [{ columns, rows, truncated }],
+            rowsAffected: null,
+            executionMs: Date.now() - start,
+          }),
+        );
+      };
+
+      query.on('fields', (fields: mysql.FieldPacket[]) => {
+        columns = fieldsToColumns(fields);
+      });
+      stream.on('data', (row: Record<string, unknown>) => {
+        if (rowObjects.length < cap) {
+          rowObjects.push(row);
+        } else {
+          // One row past the cap: mark truncated and stop the server sending more.
+          truncated = true;
+          stream.destroy();
+          done();
+        }
+      });
+      stream.on('end', done);
+      stream.on('error', (err: Error) => settle(() => reject(new QueryError(err.message, { cause: err }))));
+
+      if (options.signal && threadId != null) {
+        onAbort = () => {
+          stream.destroy();
+          void this.kill(threadId);
+          settle(() => reject(new QueryError('Query cancelled.')));
+        };
+        if (options.signal.aborted) onAbort();
+        else options.signal.addEventListener('abort', onAbort, { once: true });
+      }
+    });
+  }
+
+  private async queryBuffered(sql: string, options: QueryOptions, start: number): Promise<QueryResult> {
     const threadId = (this.conn as unknown as { threadId?: number }).threadId;
     let onAbort: (() => void) | undefined;
 
