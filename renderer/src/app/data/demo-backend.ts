@@ -114,7 +114,7 @@ export class DemoBackend implements CustosApi {
         connectionFields: [
           { key: 'server', label: 'Server', type: 'string', required: true, placeholder: 'myserver.database.windows.net' },
           { key: 'port', label: 'Port', type: 'number', required: true, default: 1433 },
-          { key: 'database', label: 'Database', type: 'string', required: true },
+          { key: 'database', label: 'Database', type: 'string', placeholder: 'optional — browse and pick from the tree' },
           { key: 'authMode', label: 'Authentication', type: 'select', required: true, default: 'sql', options: [ { value: 'sql', label: 'SQL login' }, { value: 'ntlm', label: 'Windows (NTLM)' }, { value: 'azuread-token', label: 'Azure AD access token' } ] },
           { key: 'domain', label: 'Domain', type: 'string', placeholder: 'e.g. CORP', visibleWhen: { field: 'authMode', equals: 'ntlm' }, help: 'Windows domain for NTLM (integrated) authentication.' },
           { key: 'user', label: 'User', type: 'string', visibleWhen: { field: 'authMode', in: ['sql', 'ntlm'] } },
