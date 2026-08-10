@@ -14,3 +14,26 @@
   color: var(--text);
   font-family: var(--font-ui);
 }
+
+/* Light/Dark/System segmented control. The `.sel` modifier is bound to
+   ThemeService.mode(), so the highlighted segment tracks the actual theme
+   (the icon follows too, via currentColor). */
+.tg-seg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font: 500 11px/1.4 var(--font-ui);
+  color: var(--text-2);
+  cursor: pointer;
+}
+.tg-seg.sel {
+  background: var(--bg);
+  box-shadow: 0 1px 1px rgba(16, 22, 25, 0.08);
+  font-weight: 600;
+  color: var(--text);
+}
+.tg-seg .tg {
+  cursor: pointer;
+}
