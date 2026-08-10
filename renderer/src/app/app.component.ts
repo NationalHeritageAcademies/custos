@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { ConnectionFormComponent } from './components/connection-form.component';
 import { CodeEditorComponent } from './components/code-editor.component';
 import { ConnectionTreeComponent } from './components/connection-tree.component';
@@ -51,5 +51,19 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     void this.ws.init();
+  }
+
+  /**
+   * Escape closes the top-most open overlay — the dialogs advertise "esc to
+   * close", and it's the expected dismissal for the side panels too. Most-modal
+   * first: the guardian confirm, then the dialogs, then the history panel.
+   */
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (this.ws.confirm()) return void this.ws.cancelConfirm();
+    if (this.ws.settingsOpen()) return void this.ws.closeSettings();
+    if (this.ws.formOpen()) return void this.ws.closeForm();
+    if (this.ws.importOpen()) return void this.ws.closeImport();
+    if (this.ws.historyOpen()) return void this.ws.closeHistory();
   }
 }

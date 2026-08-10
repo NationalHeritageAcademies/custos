@@ -57,6 +57,13 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
         this.applyingExternal = true;
         this.editor.setValue(sql);
         this.applyingExternal = false;
+        // setValue moves the caret to the start; reflect that in the status bar,
+        // but do it off the effect flush so the signal writes don't throw NG0600.
+        queueMicrotask(() => {
+          const pos = this.editor?.getPosition();
+          this.ws.selectionText.set('');
+          if (pos) this.ws.cursor.set({ line: pos.lineNumber, column: pos.column });
+        });
       }
     });
     // Keep Monaco's theme in sync with the app theme.
@@ -92,6 +99,11 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
       if (!this.applyingExternal) this.ws.setSql(this.editor!.getValue());
     });
     this.editor.onDidChangeCursorSelection(() => {
+      // While applying an external value (tab switch, table click, history
+      // reopen) setValue() fires this synchronously inside the sync effect
+      // below; writing signals there throws NG0600. The effect resets the
+      // caret display itself afterwards, so just skip.
+      if (this.applyingExternal) return;
       const sel = this.editor!.getSelection();
       this.ws.selectionText.set(sel ? this.editor!.getModel()!.getValueInRange(sel) : '');
       const pos = this.editor!.getPosition();

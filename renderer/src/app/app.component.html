@@ -55,7 +55,7 @@
       <div style="height:30px;flex:none;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--surface);border-top:1px solid var(--border);font:400 11px/1 'JetBrains Mono',monospace;color:var(--text-2)">
         <span style="display:flex;align-items:center;gap:6px;color:var(--success)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m5 13 4 4 10-10"/></svg>{{ ws.rowCount() ?? 0 }} rows</span>
         <span style="color:var(--border-strong)">|</span><span>{{ ws.execMs() ?? 0 }} ms</span>
-        <span style="color:var(--border-strong)">|</span><span>fetched {{ ws.fetched() }} of {{ ws.rowCount() ?? 0 }}{{ ws.truncated() ? " · scroll to load" : "" }}</span>
+        <span style="color:var(--border-strong)">|</span><span>fetched {{ ws.fetched() }} rows{{ ws.truncated() ? " · row limit reached" : "" }}</span>
         <div style="flex:1"></div>
         <span>{{ ws.activeConnection()?.name ?? "—" }}@if (ws.activeDatabase()) { / {{ ws.activeDatabase() }} }</span>
         <span style="color:var(--border-strong)">|</span><span>Ln {{ ws.cursor().line }}, Col {{ ws.cursor().column }}</span>

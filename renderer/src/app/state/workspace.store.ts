@@ -448,12 +448,18 @@ export class WorkspaceStore {
     }));
   }
 
-  /** Clicking a table selects its database, drops a SELECT in, and runs it. */
+  /**
+   * Clicking a table selects its database and previews it — in a NEW tab, so an
+   * in-progress query in the current tab is never clobbered (mirrors how history
+   * reopens a query).
+   */
   private async useTable(node: TreeNode): Promise<void> {
     if (node.database) await this.setActive(node.connectionId, node.database);
     else this.activeConnectionId.set(node.connectionId);
     const name = node.schema ? `${node.schema}.${node.table!.name}` : node.table!.name;
-    this.setSql(`SELECT * FROM ${name};`);
+    const tab = makeTab(node.table!.name, `SELECT * FROM ${name};`);
+    this.tabs.set([...this.tabs(), tab]);
+    this.activeTabId.set(tab.id);
     void this.run();
   }
 
