@@ -84,6 +84,33 @@ Your `DriverConnection` implements `listDatabases`, `listSchemas`, `listTables`,
 results match the shape the grid expects. Honor `QueryOptions` (`signal` for cancel,
 `maxRows` for the row cap, `timeoutMs`).
 
+### 2b. (Optional) interactive sign-in
+
+If some of your auth modes get their credentials from an identity provider (SSO, OAuth,
+Entra ID with MFA) rather than a stored secret, also implement `InteractiveAuthDriver`:
+
+```ts
+import { type InteractiveAuthDriver, type SignInPrompt } from '@custos/core';
+
+export class MyEngineDriver implements DatabaseDriver, InteractiveAuthDriver {
+  // Does this params bag sign in interactively, and who is signed in already?
+  signInRequirement(params) { return { required: true, account: null }; }
+
+  // Run the sign-in. Call onPrompt as soon as you know what to show the user
+  // (a device code, or "your browser is opening") — well before you resolve.
+  async signIn(params, onPrompt: (p: SignInPrompt) => void, signal?: AbortSignal) {
+    onPrompt({ kind: 'device-code', message: '…', userCode: 'ABC-123', verificationUri: 'https://…' });
+    return 'user@example.com'; // resolves once the provider confirms
+  }
+}
+```
+
+The engine and UI take it from there: `ConnectionManager` owns the flow
+(`beginSignIn`/`pollSignIn`/`cancelSignIn`), the sign-in dialog renders whatever your
+prompt says, and a `connect` that throws `SignInRequiredError` (code
+`SIGN_IN_REQUIRED`) makes the UI sign the user in and retry the interrupted call. See
+`packages/driver-azuresql/src/entra.ts` for a worked example.
+
 ### 3. Register it
 
 Add one line to `main/src/bootstrap.ts`:

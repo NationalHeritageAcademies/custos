@@ -31,6 +31,10 @@ bolted on.
   [CONTRIBUTING.md](CONTRIBUTING.md#how-to-add-a-driver).
 - **Light & dark themes from day one** — one design-token layer, switched via a
   Light / Dark / System toggle that follows the OS.
+- **Microsoft Entra ID sign-in (with MFA)** — connect to Azure SQL as *you*, with no
+  password stored anywhere: sign in through Microsoft (device code, your browser, or an
+  existing `az login`) and Custos holds only an in-memory token session. See
+  [Signing in to Azure SQL with Microsoft Entra ID](#signing-in-to-azure-sql-with-microsoft-entra-id).
 - **Guardian safety** — OS-keychain credential storage (never plaintext),
   per-connection **read-only** mode, and confirm-before-run for `UPDATE`/`DELETE`
   without a `WHERE`, `TRUNCATE`, and `DROP`.
@@ -40,7 +44,41 @@ bolted on.
   `dataSources.xml` (metadata only; passwords are never in that file and go to
   your keychain on first connect).
 - **No telemetry** — Custos makes no network calls except to the databases you
-  configure. See [Privacy](#privacy).
+  configure, and to Microsoft's sign-in endpoints when you choose an Entra
+  authentication mode. See [Privacy](#privacy).
+
+## Signing in to Azure SQL with Microsoft Entra ID
+
+Pick an **Authentication** mode in the connection form:
+
+| Mode | What happens | Use it when |
+| --- | --- | --- |
+| **Microsoft Entra ID — sign in with MFA** | Custos shows a device code; you enter it at `microsoft.com/devicelogin` and complete MFA there | the default choice; works on any machine, including over SSH or in the web host |
+| **Microsoft Entra ID — sign in via browser** | Your system browser opens on the Microsoft sign-in page | you are at the desktop app and want one less step |
+| **Microsoft Entra ID — use the Azure CLI login** | Custos reuses the account from `az login` — no prompt at all | you already live in the Azure CLI |
+| SQL login / Windows (NTLM) / access token | unchanged | server-local logins, or a token you obtained elsewhere |
+
+Details worth knowing:
+
+- **Nothing is stored.** These modes save no secret — not in the keychain, not on
+  disk. The token session lives in memory, so expect to sign in again after Custos
+  restarts. Tokens refresh themselves silently while Custos is running.
+- **MFA is Microsoft's, not ours.** Custos never sees your password or your MFA
+  challenge; it only relays the code Microsoft issued and waits.
+- **One sign-in per tenant.** Every connection sharing a tenant (and app
+  registration) shares the sign-in.
+- **Switch account** discards Custos's local session and prompts again. It does not
+  sign you out of Microsoft in your browser, so if the sign-in page goes straight
+  through as your previous account, pick *Use another account* there.
+- **Tenant** is optional — leave it blank to sign in to your account's own tenant.
+- **App registration (client ID)** is optional too: blank uses Microsoft's developer
+  sign-on app. Tenants that block it need their own registered **public client** with
+  the redirect URI `http://localhost` and device-code flow enabled.
+- Your Entra account still needs a database login — ask your DBA for
+  `CREATE USER [you@example.com] FROM EXTERNAL PROVIDER` and the roles you need.
+- Connecting before you have signed in is not an error you have to decode: Custos
+  raises `SIGN_IN_REQUIRED`, opens the sign-in dialog, and resumes what you were doing
+  once you are through.
 
 ## Architecture at a glance
 
@@ -111,9 +149,11 @@ npm run test:integration:mysql -w @custos/app   # live MySQL harness (see CONTRI
 
 Custos stores connection metadata locally in your user-data directory and secrets in
 the OS keychain (via Electron `safeStorage`). It sends **no analytics or telemetry**
-and makes no outbound network requests other than the database connections you set up.
-The only current exception is web-font loading in the renderer, which is tracked for
-removal (bundling fonts locally) in the execution plan.
+and makes no outbound network requests other than the database connections you set up
+— plus, if you choose a Microsoft Entra authentication mode, the Microsoft sign-in
+endpoints that mode requires (`login.microsoftonline.com` and, for a device code,
+`microsoft.com/devicelogin`). Entra sign-ins are held in memory only and never written
+to disk. Fonts are bundled locally, so the renderer makes no font requests.
 
 ## Compliance note
 

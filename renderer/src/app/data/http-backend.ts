@@ -27,6 +27,11 @@ export class HttpBackend implements CustosApi {
   testConnection: CustosApi['testConnection'] = (input) => call('testConnection', [input]);
   openConnection: CustosApi['openConnection'] = (id) => call('openConnection', [id]);
   closeConnection: CustosApi['closeConnection'] = (id) => call('closeConnection', [id]);
+  signInStatus: CustosApi['signInStatus'] = (input) => call('signInStatus', [input]);
+  beginSignIn: CustosApi['beginSignIn'] = (input) => call('beginSignIn', [input]);
+  pollSignIn: CustosApi['pollSignIn'] = (flowId) => call('pollSignIn', [flowId]);
+  cancelSignIn: CustosApi['cancelSignIn'] = (flowId) => call('cancelSignIn', [flowId]);
+  openSignInPage: CustosApi['openSignInPage'] = (flowId) => call('openSignInPage', [flowId]);
   listDatabases: CustosApi['listDatabases'] = (id) => call('listDatabases', [id]);
   listSchemas: CustosApi['listSchemas'] = (id, db) => call('listSchemas', [id, db]);
   listTables: CustosApi['listTables'] = (id, db, schema) => call('listTables', [id, db, schema]);

@@ -13,6 +13,8 @@ import type {
   DriverMetadata,
   ForeignKey,
   QueryResult,
+  SignInRequirement,
+  SignInState,
   StatementAnalysis,
   TableRef,
   TestConnectionResult,
@@ -31,6 +33,11 @@ export type {
   ParamStyle,
   QueryResult,
   ResultSet,
+  SignInKind,
+  SignInPrompt,
+  SignInRequirement,
+  SignInState,
+  SignInStatus,
   SqlValue,
   StatementAnalysis,
   StatementKind,
@@ -56,6 +63,18 @@ export interface TestConnectionInput {
   readonly params: Readonly<Record<string, string | number | boolean>>;
   readonly secrets: ConnectionSecrets;
   readonly readOnly?: boolean;
+}
+
+/** Identifies the auth settings a sign-in applies to (a draft or saved connection). */
+export interface SignInInput {
+  readonly driverId: string;
+  readonly params: Readonly<Record<string, string | number | boolean>>;
+  /**
+   * Forget the current session before signing in, so the user can pick a
+   * different account. Without this a still-valid session is reused silently and
+   * the same account comes back.
+   */
+  readonly switchAccount?: boolean;
 }
 
 export interface RunQueryInput {
@@ -93,6 +112,20 @@ export interface CustosApi {
 
   openConnection(id: string): Promise<void>;
   closeConnection(id: string): Promise<void>;
+
+  /**
+   * Interactive sign-in (Microsoft Entra ID with MFA today). `beginSignIn`
+   * resolves as soon as there is something to show the user — typically a device
+   * code — and the flow then runs to completion in the background, which the
+   * renderer follows with `pollSignIn`. Both host transports are
+   * request/response only, hence the polling.
+   */
+  signInStatus(input: SignInInput): Promise<SignInRequirement>;
+  beginSignIn(input: SignInInput): Promise<SignInState>;
+  pollSignIn(flowId: string): Promise<SignInState>;
+  cancelSignIn(flowId: string): Promise<void>;
+  /** Opens the provider's sign-in page; false when this host has no browser to open. */
+  openSignInPage(flowId: string): Promise<boolean>;
 
   listDatabases(connectionId: string): Promise<string[]>;
   listSchemas(connectionId: string, database?: string): Promise<string[]>;

@@ -5,6 +5,7 @@ import {
   ReadOnlyViolationError,
   analyzeBatch,
   firstMutatingKind,
+  isInteractiveAuthDriver,
   type ColumnMeta,
   type ConnectionConfig,
   type ConnectionSecrets,
@@ -13,6 +14,9 @@ import {
   type DriverRegistry,
   type ForeignKey,
   type QueryResult,
+  type SignInPrompt,
+  type SignInRequirement,
+  type SignInState,
   type StatementAnalysis,
   type TableRef,
   type TestConnectionResult,
@@ -21,9 +25,40 @@ import type {
   DriverInfo,
   RunQueryInput,
   SaveConnectionInput,
+  SignInInput,
   TestConnectionInput,
 } from '@custos/shared';
 import type { ConnectionStore, SecretStore } from './stores';
+
+/** One interactive sign-in in progress (or its settled outcome). */
+interface SignInFlow {
+  state: SignInState;
+  readonly controller: AbortController;
+}
+
+/**
+ * Hosts Microsoft (and other identity providers) use for sign-in pages. Only
+ * these are handed to the OS browser — see {@link ConnectionManager.openSignInPage}.
+ */
+const SIGN_IN_HOSTS = [
+  'microsoft.com',
+  'login.microsoftonline.com',
+  'login.microsoftonline.us',
+  'login.partner.microsoftonline.cn',
+  'login.microsoft.com',
+];
+
+/** True for an https URL whose host is (or is under) an allowlisted sign-in host. */
+export function isAllowedSignInUrl(url: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  return SIGN_IN_HOSTS.some((host) => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+}
 
 /**
  * The heart of the main process. Owns the driver registry, persistence stores,
@@ -37,17 +72,26 @@ import type { ConnectionStore, SecretStore } from './stores';
  *  - Enforcing the per-connection read-only flag.
  *  - Requiring confirmation for destructive statements.
  *  - Correlating in-flight queries so they can be cancelled.
+ *  - Tracking interactive sign-in flows (Entra ID / MFA) on behalf of drivers.
  */
 export class ConnectionManager {
   private readonly open = new Map<string, DriverConnection>();
   private readonly openConfigs = new Map<string, ConnectionConfig>();
   private readonly inflight = new Map<string, AbortController>();
   private readonly activeDatabase = new Map<string, string>();
+  private readonly signInFlows = new Map<string, SignInFlow>();
+  private signInCounter = 0;
 
   constructor(
     private readonly registry: DriverRegistry,
     private readonly connectionStore: ConnectionStore,
     private readonly secretStore: SecretStore,
+    /**
+     * How to open a URL in the user's browser. Electron passes
+     * `shell.openExternal`; the web host leaves it out (it has no desktop
+     * shell), and the UI then just shows the link for the user to open.
+     */
+    private readonly openExternal?: (url: string) => Promise<void>,
   ) {}
 
   listDrivers(): DriverInfo[] {
@@ -144,6 +188,100 @@ export class ConnectionManager {
     return this.requireOpen(id).getForeignKeys(table);
   }
 
+  // --- Interactive sign-in (Entra ID / MFA) ---
+
+  /** Whether these connection params sign in interactively, and who is signed in. */
+  signInStatus(input: SignInInput): SignInRequirement {
+    const driver = this.registry.get(input.driverId);
+    if (!isInteractiveAuthDriver(driver)) return { required: false, account: null };
+    return driver.signInRequirement(input.params);
+  }
+
+  /**
+   * Start an interactive sign-in and return as soon as there is something to
+   * show the user — the device code, or the outcome if the flow finished that
+   * fast. The flow keeps running in the background; the renderer follows it with
+   * {@link pollSignIn}.
+   */
+  async beginSignIn(input: SignInInput): Promise<SignInState> {
+    const driver = this.registry.get(input.driverId);
+    if (!isInteractiveAuthDriver(driver)) {
+      throw new ConnectionError(`The "${input.driverId}" driver has no interactive sign-in.`);
+    }
+    // "Switch account": drop the existing session first, or the provider signs
+    // the same account straight back in without ever prompting.
+    if (input.switchAccount) driver.forgetSignIn?.(input.params);
+    // Settled flows are only kept until they are polled once more; clear them
+    // out whenever a new sign-in starts so the map cannot grow unbounded.
+    for (const [id, flow] of this.signInFlows) {
+      if (flow.state.status !== 'pending') this.signInFlows.delete(id);
+    }
+
+    const flowId = `signin-${++this.signInCounter}`;
+    const controller = new AbortController();
+    const flow: SignInFlow = { state: { flowId, status: 'pending' }, controller };
+    this.signInFlows.set(flowId, flow);
+
+    let prompted!: () => void;
+    const promptReady = new Promise<void>((resolve) => (prompted = resolve));
+    const onPrompt = (prompt: SignInPrompt): void => {
+      flow.state = { ...flow.state, prompt };
+      prompted();
+    };
+
+    const settled = driver
+      .signIn(input.params, onPrompt, controller.signal)
+      .then((account) => {
+        flow.state = { ...flow.state, status: 'complete', account };
+      })
+      .catch((err: unknown) => {
+        flow.state = {
+          ...flow.state,
+          status: controller.signal.aborted ? 'cancelled' : 'failed',
+          message: err instanceof Error ? err.message : String(err),
+        };
+      });
+
+    await Promise.race([promptReady, settled]);
+    return flow.state;
+  }
+
+  /** Current state of a sign-in flow. */
+  pollSignIn(flowId: string): SignInState {
+    const flow = this.signInFlows.get(flowId);
+    if (!flow) {
+      return { flowId, status: 'failed', message: 'That sign-in is no longer in progress.' };
+    }
+    if (flow.state.status !== 'pending') this.signInFlows.delete(flowId);
+    return flow.state;
+  }
+
+  /** Abandon a sign-in the user backed out of. */
+  cancelSignIn(flowId: string): void {
+    const flow = this.signInFlows.get(flowId);
+    if (!flow) return;
+    flow.controller.abort();
+    flow.state = { ...flow.state, status: 'cancelled' };
+    this.signInFlows.delete(flowId);
+  }
+
+  /**
+   * Open the sign-in page for a flow in the user's browser. The URL comes from
+   * the identity provider rather than from the renderer, and it is checked
+   * against a host allowlist before being handed to the OS — an untrusted URL
+   * is never opened on the user's behalf. Returns false when this host cannot
+   * open a browser (the web host), so the UI falls back to showing the link.
+   */
+  async openSignInPage(flowId: string): Promise<boolean> {
+    const uri = this.signInFlows.get(flowId)?.state.prompt?.verificationUri;
+    if (!uri || !this.openExternal) return false;
+    if (!isAllowedSignInUrl(uri)) {
+      throw new ConnectionError(`Refusing to open an unexpected sign-in URL: ${uri}`);
+    }
+    await this.openExternal(uri);
+    return true;
+  }
+
   analyzeSql(sql: string): StatementAnalysis[] {
     return analyzeBatch(sql);
   }
@@ -210,6 +348,8 @@ export class ConnectionManager {
   async dispose(): Promise<void> {
     for (const controller of this.inflight.values()) controller.abort();
     this.inflight.clear();
+    for (const flow of this.signInFlows.values()) flow.controller.abort();
+    this.signInFlows.clear();
     await Promise.all([...this.open.values()].map((c) => c.close().catch(() => undefined)));
     this.open.clear();
     this.openConfigs.clear();

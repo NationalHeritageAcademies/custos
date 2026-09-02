@@ -35,6 +35,11 @@ export class CustosClient {
   testConnection: CustosApi['testConnection'] = (input) => this.require().testConnection(input);
   openConnection: CustosApi['openConnection'] = (id) => this.require().openConnection(id);
   closeConnection: CustosApi['closeConnection'] = (id) => this.require().closeConnection(id);
+  signInStatus: CustosApi['signInStatus'] = (input) => this.require().signInStatus(input);
+  beginSignIn: CustosApi['beginSignIn'] = (input) => this.require().beginSignIn(input);
+  pollSignIn: CustosApi['pollSignIn'] = (flowId) => this.require().pollSignIn(flowId);
+  cancelSignIn: CustosApi['cancelSignIn'] = (flowId) => this.require().cancelSignIn(flowId);
+  openSignInPage: CustosApi['openSignInPage'] = (flowId) => this.require().openSignInPage(flowId);
   listDatabases: CustosApi['listDatabases'] = (id) => this.require().listDatabases(id);
   listSchemas: CustosApi['listSchemas'] = (id, db) => this.require().listSchemas(id, db);
   listTables: CustosApi['listTables'] = (id, database, schema) => this.require().listTables(id, database, schema);

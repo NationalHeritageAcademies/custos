@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import { app, BrowserWindow, nativeTheme } from 'electron';
+import { app, BrowserWindow, nativeTheme, shell } from 'electron';
 import { buildConnectionManager } from './bootstrap';
 import { registerIpc } from './ipc/register';
 import type { ConnectionManager } from './engine';
@@ -14,6 +14,27 @@ import type { ConnectionManager } from './engine';
 const DEV_SERVER_URL = process.env.CUSTOS_DEV_SERVER_URL;
 
 let manager: ConnectionManager | undefined;
+
+/**
+ * Last-resort guards for the main process. An Electron main process dies on an
+ * unhandled exception — window and all — with nothing on screen to explain it,
+ * and a driver (or one of its dependencies) can throw *outside* any request's
+ * await chain: tedious during its login handshake, MSAL while refreshing a
+ * token, the loopback listener the browser sign-in flow opens. The web host got
+ * this same backstop for the same reason (see server.ts); logging and staying up
+ * is far better than a silent disappearance, and the call that triggered it
+ * still fails on its own path.
+ */
+function installProcessGuards(): void {
+  process.on('uncaughtException', (err) => {
+    // eslint-disable-next-line no-console
+    console.error('[custos] Uncaught exception in the main process — app kept alive:', err);
+  });
+  process.on('unhandledRejection', (reason) => {
+    // eslint-disable-next-line no-console
+    console.error('[custos] Unhandled rejection in the main process — app kept alive:', reason);
+  });
+}
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -34,6 +55,21 @@ function createWindow(): void {
 
   window.once('ready-to-show', () => window.show());
 
+  // A renderer that dies, hangs, or fails to load leaves a blank or missing
+  // window that looks exactly like a crash. Say so in the terminal instead.
+  window.webContents.on('render-process-gone', (_event, details) => {
+    // eslint-disable-next-line no-console
+    console.error(`[custos] The window's renderer went away: ${details.reason} (exit ${details.exitCode})`);
+  });
+  window.webContents.on('unresponsive', () => {
+    // eslint-disable-next-line no-console
+    console.error('[custos] The window stopped responding.');
+  });
+  window.webContents.on('did-fail-load', (_event, code, description, url) => {
+    // eslint-disable-next-line no-console
+    console.error(`[custos] Failed to load the UI: ${description} (${code}) — ${url}`);
+  });
+
   if (DEV_SERVER_URL) {
     void window.loadURL(DEV_SERVER_URL);
   } else {
@@ -44,8 +80,10 @@ function createWindow(): void {
   }
 }
 
+installProcessGuards();
+
 app.whenReady().then(() => {
-  manager = buildConnectionManager(app.getPath('userData'));
+  manager = buildConnectionManager(app.getPath('userData'), (url) => shell.openExternal(url));
   registerIpc(manager);
   createWindow();
 

@@ -17,10 +17,18 @@ export function buildRegistry(): DriverRegistry {
   return registry;
 }
 
-/** Build a ConnectionManager backed by on-disk, keychain-encrypted stores. */
-export function buildConnectionManager(userDataDir: string): ConnectionManager {
+/**
+ * Build a ConnectionManager backed by on-disk, keychain-encrypted stores.
+ * `openExternal` lets the engine send an identity provider's sign-in page to the
+ * user's browser (Electron's `shell.openExternal`) without importing Electron
+ * itself — see ConnectionManager.openSignInPage.
+ */
+export function buildConnectionManager(
+  userDataDir: string,
+  openExternal?: (url: string) => Promise<void>,
+): ConnectionManager {
   const registry = buildRegistry();
   const connectionStore = new JsonConnectionStore(path.join(userDataDir, 'connections.json'));
   const secretStore = new SafeStorageSecretStore(path.join(userDataDir, 'secrets.bin'));
-  return new ConnectionManager(registry, connectionStore, secretStore);
+  return new ConnectionManager(registry, connectionStore, secretStore, openExternal);
 }
