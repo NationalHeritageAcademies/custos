@@ -2,10 +2,8 @@ import mysql from 'mysql2/promise';
 import {
   ConnectionError,
   QueryError,
+  canStreamSelect,
   emptyResultSet,
-  firstKeyword,
-  splitStatements,
-  stripSqlComments,
   toResultSet,
   type ColumnMeta,
   type ConnectionConfig,
@@ -24,12 +22,9 @@ import {
   type TestConnectionResult,
 } from '@custos/core';
 
-// Statements safe to stream row-by-row with an early stop: each always produces
-// a result set, so mysql2's row stream emits `fields`/`end` and never hangs (an
-// OK-packet statement — DML/DDL/`SET`, or a `SELECT … INTO` — would stall a row
-// stream, so those take the buffered path). `with` is excluded because a CTE can
-// front a writing statement (`WITH … INSERT/UPDATE`) that returns no result set.
-const STREAMABLE_KEYWORDS = new Set(['select', 'show', 'describe', 'desc', 'explain']);
+// `canStreamSelect` (the single-capped-SELECT gate) lives in @custos/core so the
+// MySQL and Azure SQL drivers share one definition; re-exported for tests.
+export { canStreamSelect } from '@custos/core';
 
 // The row-stream / event API lives on mysql2's callback connection, not the
 // promise wrapper. These are the only members the streaming path touches.
@@ -45,22 +40,6 @@ interface RawQuery {
 }
 interface RawConnection {
   query(opts: { sql: string; values?: unknown[] }): RawQuery;
-}
-
-/**
- * Whether a query should be streamed with an early stop rather than buffered.
- * Only a single, capped, result-set-returning statement qualifies. Exported for
- * unit testing. See {@link STREAMABLE_KEYWORDS} for why the set is conservative.
- */
-export function canStreamSelect(sql: string, maxRows: number | undefined): boolean {
-  if (!maxRows || maxRows <= 0) return false; // no cap → nothing to stop early for
-  const statements = splitStatements(sql);
-  if (statements.length !== 1) return false; // multi-statement → buffered
-  const only = statements[0]!;
-  if (!STREAMABLE_KEYWORDS.has(firstKeyword(only))) return false;
-  // `SELECT … INTO @var / OUTFILE` returns no result set → would hang a stream.
-  if (/\binto\b/i.test(stripSqlComments(only))) return false;
-  return true;
 }
 
 const METADATA: DriverMetadata = {

@@ -2,6 +2,7 @@ import * as sql from 'mssql';
 import {
   ConnectionError,
   QueryError,
+  canStreamSelect,
   emptyResultSet,
   toResultSet,
   type ColumnMeta,
@@ -16,6 +17,7 @@ import {
   type QueryOptions,
   type QueryResult,
   type ResultSet,
+  type SqlValue,
   type TableRef,
   type TestConnectionResult,
 } from '@custos/core';
@@ -169,8 +171,13 @@ function dbPrefix(database?: string): string {
 }
 
 function columnsOf(recordset: sql.IRecordSet<Record<string, unknown>> | undefined): ColumnMeta[] {
-  if (!recordset?.columns) return [];
-  return Object.values(recordset.columns)
+  return columnMetaFrom(recordset?.columns);
+}
+
+/** ColumnMeta from an mssql column-metadata object (as the `recordset` stream event delivers). */
+function columnMetaFrom(columns: sql.IColumnMetadata | undefined): ColumnMeta[] {
+  if (!columns) return [];
+  return Object.values(columns)
     .sort((a, b) => a.index - b.index)
     .map((c) => ({
       name: c.name,
@@ -295,15 +302,99 @@ class AzureSqlConnection implements DriverConnection {
 
   async query(query: string, options: QueryOptions = {}): Promise<QueryResult> {
     const start = Date.now();
-    const request = this.pool.request();
-    request.multiple = true;
+    // A single capped SELECT streams and stops fetching once the cap is hit,
+    // rather than buffering the whole result set and then truncating.
+    if (canStreamSelect(query, options.maxRows)) {
+      return this.queryStreaming(query, options, start);
+    }
+    return this.queryBuffered(query, options, start);
+  }
 
+  private applyParams(request: sql.Request, options: QueryOptions): void {
     // Named parameters (@name) are supplied as an object under paramStyle 'named'.
     if (options.params && !Array.isArray(options.params)) {
       for (const [key, value] of Object.entries(options.params)) {
         request.input(key, value);
       }
     }
+  }
+
+  /**
+   * Stream a single result-set statement, keeping at most `maxRows` rows and
+   * cancelling the request as soon as one more arrives (which stops SQL Server
+   * sending the rest). Only reached via {@link canStreamSelect}. Peak memory is
+   * bounded to ~`maxRows` rows regardless of table size.
+   */
+  private queryStreaming(query: string, options: QueryOptions, start: number): Promise<QueryResult> {
+    const cap = options.maxRows && options.maxRows > 0 ? options.maxRows : Infinity;
+    const request = this.pool.request();
+    request.stream = true;
+    this.applyParams(request, options);
+
+    return new Promise<QueryResult>((resolve, reject) => {
+      let columns: ColumnMeta[] = [];
+      const rowObjects: Record<string, unknown>[] = [];
+      let truncated = false;
+      let settled = false;
+      let onAbort: (() => void) | undefined;
+
+      const settle = (fn: () => void): void => {
+        if (settled) return;
+        settled = true;
+        if (options.signal && onAbort) options.signal.removeEventListener('abort', onAbort);
+        fn();
+      };
+      const done = (): void => {
+        const rows: SqlValue[][] = rowObjects.map((obj) =>
+          columns.map((col) => (obj[col.name] ?? null) as SqlValue),
+        );
+        settle(() =>
+          resolve({
+            resultSets: [{ columns, rows, truncated }],
+            rowsAffected: null,
+            executionMs: Date.now() - start,
+          }),
+        );
+      };
+
+      request.on('recordset', (cols: sql.IColumnMetadata) => {
+        columns = columnMetaFrom(cols);
+      });
+      request.on('row', (row: Record<string, unknown>) => {
+        if (settled) return;
+        if (rowObjects.length < cap) {
+          rowObjects.push(row);
+        } else {
+          // One row past the cap: mark truncated and stop the server sending more.
+          truncated = true;
+          request.cancel();
+          done();
+        }
+      });
+      request.on('done', done);
+      request.on('error', (err: Error) => {
+        // The cancel we issue at the cap surfaces here too; it's already settled.
+        settle(() => reject(new QueryError(err.message, { cause: err })));
+      });
+
+      if (options.signal) {
+        onAbort = () => {
+          request.cancel();
+          settle(() => reject(new QueryError('Query cancelled.')));
+        };
+        if (options.signal.aborted) onAbort();
+        else options.signal.addEventListener('abort', onAbort, { once: true });
+      }
+
+      // With stream:true the promise settles on 'done'/'error'; guard anyway.
+      request.query(query).catch((err: Error) => settle(() => reject(new QueryError(err.message, { cause: err }))));
+    });
+  }
+
+  private async queryBuffered(query: string, options: QueryOptions, start: number): Promise<QueryResult> {
+    const request = this.pool.request();
+    request.multiple = true;
+    this.applyParams(request, options);
 
     let onAbort: (() => void) | undefined;
     if (options.signal) {
