@@ -5,6 +5,7 @@ import type {
   ConnectionSecrets,
   DriverInfo,
   ResultSet,
+  SignInState,
   StatementAnalysis,
   TableRef,
 } from '@custos/shared';
@@ -16,6 +17,11 @@ import {
 import { resolveBackend, isLiveBackend } from '../data/backend';
 
 export type FieldValue = string | number | boolean;
+
+/** True when a failed call is really "the user needs to sign in first". */
+function needsSignIn(err: unknown): boolean {
+  return (err as { code?: string } | null)?.code === 'SIGN_IN_REQUIRED';
+}
 
 export interface ConnectionDraft {
   driverId: string;
@@ -378,7 +384,15 @@ export class WorkspaceStore {
       node.loaded = true;
       node.expanded = true;
     } catch (err) {
-      this.patchActiveTab({ error: err instanceof Error ? err.message : String(err) });
+      // An auth mode that signs in interactively (Entra ID / MFA) reports a
+      // missing sign-in rather than failing outright: run the sign-in, then
+      // pick this expansion back up where it left off.
+      const config = this.connections().find((c) => c.id === node.connectionId);
+      if (needsSignIn(err) && config) {
+        void this.signInFor(config.driverId, config.params, () => this.toggle(node));
+      } else {
+        this.patchActiveTab({ error: err instanceof Error ? err.message : String(err) });
+      }
     } finally {
       node.loading = false;
       this.tree.set([...this.tree()]);
@@ -610,6 +624,7 @@ export class WorkspaceStore {
         });
         this.editingId.set(editId);
         this.formOpen.set(true);
+        this.refreshSignInStatus();
         return;
       }
     }
@@ -617,6 +632,7 @@ export class WorkspaceStore {
     const driver = this.drivers()[0];
     this.draft.set(this.blankDraft(driver?.metadata.id ?? 'mysql'));
     this.formOpen.set(true);
+    this.refreshSignInStatus();
   }
 
   closeForm(): void {
@@ -640,6 +656,7 @@ export class WorkspaceStore {
     this.draft.set(this.blankDraft(driverId));
     this.testStatus.set('idle');
     this.testMessage.set('');
+    this.refreshSignInStatus();
   }
 
   private blankDraft(driverId: string): ConnectionDraft {
@@ -657,6 +674,7 @@ export class WorkspaceStore {
     if (!d) return;
     this.draft.set({ ...d, values: { ...d.values, [key]: value } });
     this.testStatus.set('idle');
+    this.refreshSignInStatus();
   }
 
   setName(name: string): void {
@@ -701,9 +719,179 @@ export class WorkspaceStore {
         this.testMessage.set(res.message);
       }
     } catch (err) {
+      if (needsSignIn(err)) {
+        this.testStatus.set('idle');
+        this.testMessage.set('');
+        void this.signInForDraft({ retry: () => this.test() });
+        return;
+      }
       this.testStatus.set('error');
       this.testMessage.set(err instanceof Error ? err.message : String(err));
     }
+  }
+
+  // --- Interactive sign-in (Microsoft Entra ID / MFA) ---
+
+  /** The live sign-in flow, or null when no sign-in is in progress. */
+  readonly signIn = signal<SignInState | null>(null);
+  /** True when the draft's auth mode signs in interactively (drives the form row). */
+  readonly signInRequired = signal(false);
+  /** Account signed in for the draft's auth settings, when there is one. */
+  readonly signInAccount = signal<string | null>(null);
+  /** Extra guidance shown in the dialog (e.g. when this host cannot open a browser). */
+  readonly signInNote = signal('');
+
+  private signInStatusTimer: ReturnType<typeof setTimeout> | undefined;
+  /** What to re-run once a sign-in succeeds (the call that asked for it). */
+  private afterSignIn: (() => Promise<void>) | null = null;
+  /** The auth settings of the last sign-in, so "try again" can repeat it. */
+  private lastSignIn:
+    | { driverId: string; params: Readonly<Record<string, FieldValue>>; switchAccount?: boolean }
+    | null = null;
+
+  /**
+   * Ask the backend whether the draft's current auth settings sign in
+   * interactively. Debounced because it runs on every keystroke in the form —
+   * the answer depends on params (tenant, client id), not just the driver, so
+   * the UI stays engine-agnostic by asking rather than guessing.
+   */
+  refreshSignInStatus(): void {
+    clearTimeout(this.signInStatusTimer);
+    this.signInStatusTimer = setTimeout(() => void this.loadSignInStatus(), 300);
+  }
+
+  private async loadSignInStatus(): Promise<void> {
+    const d = this.draft();
+    if (!d) {
+      this.signInRequired.set(false);
+      this.signInAccount.set(null);
+      return;
+    }
+    try {
+      const status = await this.backend.signInStatus({
+        driverId: d.driverId,
+        params: this.splitValues().params,
+      });
+      this.signInRequired.set(status.required);
+      this.signInAccount.set(status.account);
+    } catch {
+      this.signInRequired.set(false);
+    }
+  }
+
+  /**
+   * Sign in using the connection form's current auth settings. `switchAccount`
+   * forgets the current session first, so the user actually gets a prompt to
+   * choose someone else rather than a silent re-sign-in as themselves.
+   */
+  signInForDraft(options: { switchAccount?: boolean; retry?: () => Promise<void> } = {}): Promise<void> {
+    const d = this.draft();
+    if (!d) return Promise.resolve();
+    return this.signInFor(d.driverId, this.splitValues().params, options.retry, options.switchAccount);
+  }
+
+  /** Retry a sign-in that failed, with the same auth settings. */
+  retrySignIn(): Promise<void> {
+    const last = this.lastSignIn;
+    if (!last) return Promise.resolve();
+    return this.signInFor(last.driverId, last.params, undefined, last.switchAccount);
+  }
+
+  /**
+   * Start an interactive sign-in and follow it to the end. The dialog shows
+   * whatever the provider asks for (a device code, or "finish in the browser");
+   * on success `retry` re-runs whatever call needed the sign-in.
+   */
+  private async signInFor(
+    driverId: string,
+    params: Readonly<Record<string, FieldValue>>,
+    retry?: () => Promise<void>,
+    switchAccount?: boolean,
+  ): Promise<void> {
+    this.lastSignIn = { driverId, params, switchAccount };
+    if (retry) this.afterSignIn = retry;
+    this.signInNote.set('');
+    if (switchAccount) this.signInAccount.set(null);
+    this.signIn.set({ flowId: '', status: 'pending' });
+    try {
+      const state = await this.backend.beginSignIn(
+        switchAccount ? { driverId, params, switchAccount: true } : { driverId, params },
+      );
+      this.signIn.set(state);
+      if (state.status === 'pending') return await this.followSignIn(state.flowId);
+      await this.settleSignIn(state);
+    } catch (err) {
+      this.signIn.set({
+        flowId: '',
+        status: 'failed',
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  /** Poll a pending flow until the identity provider decides, or we give up. */
+  private async followSignIn(flowId: string): Promise<void> {
+    const deadline = Date.now() + 10 * 60_000;
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 1_500));
+      // The user cancelled, or started another sign-in — stop following this one.
+      if (this.signIn()?.flowId !== flowId) return;
+      let state: SignInState;
+      try {
+        state = await this.backend.pollSignIn(flowId);
+      } catch (err) {
+        state = {
+          flowId,
+          status: 'failed',
+          message: err instanceof Error ? err.message : String(err),
+        };
+      }
+      // Keep the prompt visible: poll results carry it, but never lose it if not.
+      const prompt = state.prompt ?? this.signIn()?.prompt;
+      this.signIn.set(prompt ? { ...state, prompt } : state);
+      if (state.status !== 'pending') return await this.settleSignIn(state);
+    }
+    this.signIn.set({
+      flowId,
+      status: 'failed',
+      message: 'The sign-in timed out before it was completed. Try again.',
+    });
+  }
+
+  /** Apply a finished flow: on success, close up and resume what was interrupted. */
+  private async settleSignIn(state: SignInState): Promise<void> {
+    if (state.status === 'complete') {
+      this.signInAccount.set(state.account ?? null);
+      this.signIn.set(null);
+      const retry = this.afterSignIn;
+      this.afterSignIn = null;
+      if (retry) await retry();
+      return;
+    }
+    if (state.status === 'cancelled') this.signIn.set(null);
+    // 'failed' stays on screen with its message, so the user can try again.
+  }
+
+  /** Open the provider's sign-in page in the user's browser. */
+  async openSignInPage(): Promise<void> {
+    const flow = this.signIn();
+    if (!flow?.flowId) return;
+    try {
+      const opened = await this.backend.openSignInPage(flow.flowId);
+      if (!opened) {
+        this.signInNote.set('This host cannot open a browser for you — copy the link above instead.');
+      }
+    } catch (err) {
+      this.signInNote.set(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  /** Abandon the sign-in (and whatever call was waiting on it). */
+  async cancelSignIn(): Promise<void> {
+    const flow = this.signIn();
+    this.signIn.set(null);
+    this.afterSignIn = null;
+    if (flow?.flowId) await this.backend.cancelSignIn(flow.flowId).catch(() => undefined);
   }
 
   // --- DataGrip import ---

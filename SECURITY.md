@@ -23,8 +23,16 @@ Custos connects to databases and handles credentials, so a few design notes:
   are never written to disk in plaintext. Non-secret connection metadata is stored
   under the user-data directory (`~/.custos` for the web host).
 - **No telemetry.** Custos makes no outbound network calls except to the databases
-  you configure (and, currently, web-font loading in the renderer — tracked for
-  removal).
+  you configure. Fonts are bundled locally. Choosing a Microsoft Entra
+  authentication mode adds calls to Microsoft's own sign-in endpoints
+  (`login.microsoftonline.com`, and `microsoft.com/devicelogin` for a device code),
+  and nothing else.
+- **Entra sign-ins are never persisted.** For the Entra auth modes Custos stores no
+  secret at all: the token session (an `@azure/identity` credential and its MSAL
+  cache) lives in the main process's memory, keyed by tenant + app registration, and
+  dies with the process. Custos never handles the password or the MFA challenge — it
+  relays the device code Microsoft issued. The only URL it will hand to your browser
+  is the provider's own sign-in page, checked against a host allowlist.
 - The **web host binds to `127.0.0.1` only.** It is a local tool; do not expose it
   to a network without adding authentication and encrypted-at-rest secret storage.
 - Guardrails against accidental data loss (per-connection read-only mode,

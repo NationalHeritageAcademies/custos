@@ -1,7 +1,9 @@
 import * as sql from 'mssql';
+import type { TokenCredential } from '@azure/identity';
 import {
   ConnectionError,
   QueryError,
+  SignInRequiredError,
   canStreamSelect,
   emptyResultSet,
   toResultSet,
@@ -15,12 +17,22 @@ import {
   type DriverMetadata,
   type ForeignKey,
   type QueryOptions,
+  type InteractiveAuthDriver,
   type QueryResult,
   type ResultSet,
+  type SignInPrompt,
+  type SignInRequirement,
   type SqlValue,
   type TableRef,
   type TestConnectionResult,
 } from '@custos/core';
+import {
+  ensureEntraToken,
+  entraSignIn,
+  forgetEntraCredential,
+  entraSignInRequirement,
+  getEntraCredential,
+} from './entra';
 
 const METADATA: DriverMetadata = {
   id: 'azuresql',
@@ -50,8 +62,27 @@ const CONNECTION_FIELDS: ConnectionField[] = [
     options: [
       { value: 'sql', label: 'SQL login' },
       { value: 'ntlm', label: 'Windows (NTLM)' },
-      { value: 'azuread-token', label: 'Azure AD access token' },
+      { value: 'entra-mfa', label: 'Microsoft Entra ID \u2014 sign in with MFA' },
+      { value: 'entra-browser', label: 'Microsoft Entra ID \u2014 sign in via browser' },
+      { value: 'entra-azure-cli', label: 'Microsoft Entra ID \u2014 use the Azure CLI login' },
+      { value: 'azuread-token', label: 'Azure AD access token (paste)' },
     ],
+  },
+  {
+    key: 'tenantId',
+    label: 'Tenant',
+    type: 'string',
+    placeholder: 'optional \u2014 contoso.onmicrosoft.com or a tenant GUID',
+    visibleWhen: { field: 'authMode', in: ['entra-mfa', 'entra-browser', 'entra-azure-cli'] },
+    help: 'Leave blank to sign in to your account\u2019s own tenant.',
+  },
+  {
+    key: 'clientId',
+    label: 'App registration (client ID)',
+    type: 'string',
+    placeholder: 'optional \u2014 GUID of your Entra app registration',
+    visibleWhen: { field: 'authMode', in: ['entra-mfa', 'entra-browser'] },
+    help: 'Leave blank to sign in through the Microsoft developer sign-on app. Tenants that block it need their own registered public client (redirect URI http://localhost).',
   },
   {
     key: 'domain',
@@ -96,6 +127,19 @@ export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets
     pool: { max: 1, min: 0, idleTimeoutMillis: 30_000 },
   };
 
+  const entra = getEntraCredential(p);
+  if (entra) {
+    // tedious asks this credential for a token at every login, so tokens
+    // refresh themselves for the life of the sign-in — no stale-token pool.
+    return {
+      ...base,
+      authentication: {
+        type: 'token-credential',
+        options: { credential: entra.credential },
+      },
+    };
+  }
+
   if (p.authMode === 'azuread-token') {
     return {
       ...base,
@@ -120,6 +164,40 @@ export function buildConfig(config: ConnectionConfig, secrets: ConnectionSecrets
   return { ...base, user: p.user ? String(p.user) : undefined, password: secrets.password };
 }
 
+/** The live credential in a built config, when the connection uses an Entra mode. */
+function credentialOf(config: sql.config): TokenCredential | undefined {
+  const auth = config.authentication as { type?: string; options?: { credential?: TokenCredential } };
+  return auth?.type === 'token-credential' ? auth.options?.credential : undefined;
+}
+
+/**
+ * Build the connection pool, re-attaching the live token credential afterwards.
+ *
+ * node-mssql deep-clones its config (rfdc) inside the ConnectionPool
+ * constructor, which flattens a class instance into a plain object — the
+ * credential arrives at tedious with its prototype (and so its `getToken`)
+ * stripped, and tedious rejects it: "The
+ * config.authentication.options.credential property must be an instance of the
+ * token credential class." Putting the real credential back on the pool's own
+ * config fixes it for good: mssql re-reads that config every time it opens a
+ * connection, so token refresh keeps working on reconnects too.
+ *
+ * Exported for tests — building a pool opens no socket.
+ */
+export function buildPool(config: ConnectionConfig, secrets: ConnectionSecrets): sql.ConnectionPool {
+  const built = buildConfig(config, secrets);
+  const pool = new sql.ConnectionPool(built);
+  const credential = credentialOf(built);
+  if (credential) {
+    // `config` is mssql's own (undeclared in @types/mssql) copy of what it was
+    // given; it is what mssql maps to tedious options on every connect.
+    const cloned = (pool as unknown as { config: sql.config }).config;
+    const auth = cloned.authentication as { options?: { credential?: TokenCredential } } | undefined;
+    if (auth?.options) auth.options.credential = credential;
+  }
+  return pool;
+}
+
 /** Human-readable label for an auth mode, used in error messages. */
 function authModeLabel(mode: string): string {
   switch (mode) {
@@ -127,6 +205,10 @@ function authModeLabel(mode: string): string {
       return 'Windows (NTLM) authentication';
     case 'azuread-token':
       return 'Azure AD token authentication';
+    case 'entra-mfa':
+    case 'entra-browser':
+    case 'entra-azure-cli':
+      return 'Microsoft Entra ID authentication';
     default:
       return 'SQL login';
   }
@@ -155,6 +237,9 @@ export function assertRequiredSecrets(config: ConnectionConfig, secrets: Connect
     if (!secrets.accessToken) missing('access token');
     return;
   }
+  // Entra modes hold no secret of ours: the token comes from the signed-in
+  // credential (see entra.ts), which `ensureEntraToken` checks instead.
+  if (getEntraCredential(config.params)) return;
   // SQL login and NTLM both authenticate with a user + password.
   if (!config.params.user) missing('user name');
   if (!secrets.password) missing('password');
@@ -432,15 +517,42 @@ class AzureSqlConnection implements DriverConnection {
   }
 }
 
-export class AzureSqlDriver implements DatabaseDriver {
+export class AzureSqlDriver implements DatabaseDriver, InteractiveAuthDriver {
   readonly metadata = METADATA;
   readonly capabilities = CAPABILITIES;
   readonly connectionFields = CONNECTION_FIELDS;
 
+  /** Whether these params sign in interactively, and who is signed in now. */
+  signInRequirement(params: ConnectionConfig['params']): SignInRequirement {
+    return entraSignInRequirement(params);
+  }
+
+  /**
+   * Sign in to Microsoft Entra ID (MFA included — Microsoft runs the whole
+   * challenge). Resolves with the account once the user finishes; `onPrompt`
+   * fires earlier, with the device code to show them.
+   */
+  signIn(
+    params: ConnectionConfig['params'],
+    onPrompt: (prompt: SignInPrompt) => void,
+    signal?: AbortSignal,
+  ): Promise<string> {
+    return entraSignIn(params, onPrompt, signal);
+  }
+
+  /** Forget the token session so the next sign-in can pick another account. */
+  forgetSignIn(params: ConnectionConfig['params']): void {
+    forgetEntraCredential(params);
+  }
+
   async connect(config: ConnectionConfig, secrets: ConnectionSecrets): Promise<DriverConnection> {
     assertRequiredSecrets(config, secrets);
+    // Entra modes: confirm a token is in hand before tedious tries to log in,
+    // so "you need to sign in" is a clear SIGN_IN_REQUIRED rather than a
+    // federated-auth failure from the middle of the handshake.
+    await ensureEntraToken(config.params);
     try {
-      const pool = new sql.ConnectionPool(buildConfig(config, secrets));
+      const pool = buildPool(config, secrets);
       await pool.connect();
       return new AzureSqlConnection(pool);
     } catch (err) {
@@ -456,7 +568,8 @@ export class AzureSqlDriver implements DatabaseDriver {
     let pool: sql.ConnectionPool | undefined;
     try {
       assertRequiredSecrets(config, secrets);
-      pool = new sql.ConnectionPool(buildConfig(config, secrets));
+      await ensureEntraToken(config.params);
+      pool = buildPool(config, secrets);
       await pool.connect();
       const result = await pool.request().query<{ v: string }>('SELECT @@VERSION AS v');
       return {
@@ -466,11 +579,17 @@ export class AzureSqlDriver implements DatabaseDriver {
         latencyMs: Date.now() - start,
       };
     } catch (err) {
+      // A missing sign-in is not a test failure to report inline — it is an
+      // action the user can take, so let it travel as SIGN_IN_REQUIRED and the
+      // UI will offer the sign-in dialog and retry.
+      if (err instanceof SignInRequiredError) throw err;
       return { ok: false, message: (err as Error).message };
     } finally {
       await pool?.close().catch(() => undefined);
     }
   }
 }
+
+export { forgetEntraCredential, isInteractiveEntraMode, resetEntraCredentials } from './entra';
 
 export default AzureSqlDriver;

@@ -20,9 +20,19 @@ Status snapshot as of the initial build. Legend: ✅ done · 🟡 partial · ⬜
 
 - ✅ `@custos/driver-mysql` (mysql2): connect/test, schema introspection, multi-result
   batches, cancel via `KILL QUERY`.
-- ✅ `@custos/driver-azuresql` (mssql): SQL auth, **Windows/NTLM (domain)** auth, and
-  Azure AD access-token auth; schema/FK introspection, multi-recordset, cancel via
-  `request.cancel()`.
+- ✅ `@custos/driver-azuresql` (mssql): SQL auth, **Windows/NTLM (domain)** auth,
+  Azure AD access-token auth, and **Microsoft Entra ID sign-in with MFA** (device
+  code, system browser, or an existing `az login`); schema/FK introspection,
+  multi-recordset, cancel via `request.cancel()`.
+- ✅ **Interactive sign-in (Entra ID / MFA)** — `InteractiveAuthDriver` in
+  `@custos/core` is the generic capability; the Azure SQL driver implements it over
+  `@azure/identity` and hands tedious a `TokenCredential`
+  (`authentication.type: 'token-credential'`), so tokens refresh themselves and no
+  secret is ever stored. `ConnectionManager` owns flow state
+  (`beginSignIn`/`pollSignIn`/`cancelSignIn`/`openSignInPage`, host-allowlisted); the
+  renderer shows the device code and resumes the interrupted call on success.
+  **Verified:** 37 unit tests (driver + engine) and a demo-mode click-through of the
+  dialog. Live Entra tenant test still to be done.
 - ✅ **Row streaming for `maxRows`** — a single capped result-set statement streams
   and stops fetching one row past the cap (gated by `canStreamSelect` in
   `@custos/core`), so a huge `SELECT` no longer buffers the whole table before
@@ -167,5 +177,8 @@ hardening/robustness, roughly in priority order:
 - ✅ **Web host resilience** — driver-input validation + process-level backstops so one
   bad connection can't take down the host (also the Electron main process).
 - ✅ **Row streaming for `maxRows`** — done for MySQL and Azure SQL; verified live on both.
+- **Live Entra sign-in run-through** — the device-code and browser modes are covered by
+  unit tests and a simulated click-through; exercise both against a real Azure SQL
+  server + Entra tenant (including a token refresh past the first hour).
 - **Component states** (1i) — tree connecting/error chips, query-cancel state.
 - **Encrypted-at-rest secrets for the web host** (Phase 7).

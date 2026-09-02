@@ -11,6 +11,7 @@ import { ResultsBarComponent } from './components/results-bar.component';
 import { ResultsGridComponent } from './components/results-grid.component';
 import { SafetyDialogComponent } from './components/safety-dialog.component';
 import { SettingsDialogComponent } from './components/settings-dialog.component';
+import { SignInDialogComponent } from './components/sign-in-dialog.component';
 import { WelcomeComponent } from './components/welcome.component';
 import { CustosClient } from './custos-client.service';
 import { ThemeService } from './theme.service';
@@ -39,6 +40,7 @@ import { WorkspaceStore } from './state/workspace.store';
     ImportDialogComponent,
     HistoryPanelComponent,
     SettingsDialogComponent,
+    SignInDialogComponent,
     WelcomeComponent,
   ],
   templateUrl: './app.component.html',
@@ -56,10 +58,12 @@ export class AppComponent implements OnInit {
   /**
    * Escape closes the top-most open overlay — the dialogs advertise "esc to
    * close", and it's the expected dismissal for the side panels too. Most-modal
-   * first: the guardian confirm, then the dialogs, then the history panel.
+   * first: an in-progress sign-in, the guardian confirm, then the dialogs, then
+   * the history panel.
    */
   @HostListener('document:keydown.escape')
   onEscape(): void {
+    if (this.ws.signIn()) return void this.ws.cancelSignIn();
     if (this.ws.confirm()) return void this.ws.cancelConfirm();
     if (this.ws.settingsOpen()) return void this.ws.closeSettings();
     if (this.ws.formOpen()) return void this.ws.closeForm();

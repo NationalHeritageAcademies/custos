@@ -11,6 +11,7 @@
     "test": "node --test"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@custos/core": "*",
     "mssql": "^11.0.1"
   }

@@ -68,6 +68,17 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
               }
             }
 
+            @if (ws.signInRequired()) {
+              <div class="signin">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent-hover)" stroke-width="1.9"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5M15 12H3"/></svg>
+                <span class="scol">
+                  <span class="stitle">{{ ws.signInAccount() ? 'Signed in as ' + ws.signInAccount() : 'Microsoft sign-in required' }}</span>
+                  <span class="sdesc">Custos stores no password for this mode — Microsoft handles the sign-in and MFA, and the session lives in memory only.</span>
+                </span>
+                <button class="ghost" (click)="ws.signInForDraft({ switchAccount: !!ws.signInAccount() })">{{ ws.signInAccount() ? 'Switch account' : 'Sign in' }}</button>
+              </div>
+            }
+
             <div class="ro" (click)="ws.setReadOnly(!draft.readOnly)">
               <span class="switch" [class.on]="draft.readOnly"><span class="knob"></span></span>
               <span class="rocol">
@@ -136,6 +147,10 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
     .switch.on { background: var(--accent); justify-content: flex-end; }
     .knob { width: 16px; height: 16px; border-radius: 50%; background: #fff; }
     .rocol { display: flex; flex-direction: column; gap: 3px; }
+    .signin { display: flex; align-items: center; gap: 11px; padding: 12px 13px; border-radius: 8px; background: var(--accent-subtle); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+    .signin .scol { display: flex; flex-direction: column; gap: 3px; flex: 1; min-width: 0; }
+    .stitle { font: 600 12.5px/1.2 var(--font-ui); color: var(--accent-hover); }
+    .sdesc { font: 400 11.5px/1.5 var(--font-ui); color: var(--text-2); }
     .rotitle { display: flex; align-items: center; gap: 6px; font: 600 12.5px/1.2 var(--font-ui); color: var(--accent-hover); }
     .rodesc { font: 400 11.5px/1.5 var(--font-ui); color: var(--text-2); }
     .state { display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: 8px; font: 500 12px/1.4 var(--font-ui); }

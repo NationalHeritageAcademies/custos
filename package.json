@@ -2,7 +2,7 @@
   "name": "custos-db",
   "version": "0.1.1",
   "private": true,
-  "description": "Custos — keeper of your queries. A lightweight, open-source desktop database client for Azure SQL, MySQL, and more.",
+  "description": "Custos \u2014 keeper of your queries. A lightweight, open-source desktop database client for Azure SQL, MySQL, and more.",
   "license": "MIT",
   "author": "Custos contributors",
   "homepage": "https://github.com/NationalHeritageAcademies/custos#readme",
@@ -50,6 +50,7 @@
     "package:dist": "npm run pack && CUSTOS_NOTARIZE=1 electron-builder --mac --win --linux"
   },
   "dependencies": {
+    "@azure/identity": "^4.13.1",
     "@custos/core": "*",
     "@custos/shared": "*",
     "@custos/driver-mysql": "*",

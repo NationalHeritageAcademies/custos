@@ -47,6 +47,17 @@ export class ReadOnlyViolationError extends CustosError {
 }
 
 /**
+ * Raised when an auth mode needs an interactive sign-in that has not happened
+ * yet (or whose session has lapsed). The renderer reacts to the code by opening
+ * the sign-in dialog and retrying the original call once the user is through.
+ */
+export class SignInRequiredError extends CustosError {
+  constructor(message: string, options?: { cause?: unknown }) {
+    super('SIGN_IN_REQUIRED', message, options);
+  }
+}
+
+/**
  * Raised when a batch contains a destructive statement that has not yet been
  * confirmed by the user. Carries the per-statement analysis so the renderer can
  * explain exactly what needs confirming.
