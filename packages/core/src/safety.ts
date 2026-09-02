@@ -224,3 +224,29 @@ export function isReadOnlyBatch(sql: string): boolean {
 export function firstMutatingKind(sql: string): StatementAnalysis | null {
   return analyzeBatch(sql).find((a) => a.kind === 'write' || a.kind === 'ddl') ?? null;
 }
+
+/**
+ * Statements a driver may stream row-by-row with an early stop: each always
+ * produces a result set (so a row stream terminates rather than hanging on an
+ * OK-packet / no-result-set statement) and none can front a write. `with` is
+ * excluded because a CTE can lead a writing statement; `SELECT … INTO` is
+ * excluded because it returns no result set. Shared by the streaming drivers
+ * (MySQL, Azure SQL) so the gate can't drift between them.
+ */
+const STREAMABLE_KEYWORDS = new Set(['select', 'show', 'describe', 'desc', 'explain']);
+
+/**
+ * Whether a query should be streamed with an early stop rather than buffered.
+ * Only a single, capped, result-set-returning statement qualifies — see
+ * {@link STREAMABLE_KEYWORDS} for why the set is deliberately conservative.
+ */
+export function canStreamSelect(sql: string, maxRows: number | undefined): boolean {
+  if (!maxRows || maxRows <= 0) return false; // no cap → nothing to stop early for
+  const statements = splitStatements(sql);
+  if (statements.length !== 1) return false; // multi-statement → buffered
+  const only = statements[0]!;
+  if (!STREAMABLE_KEYWORDS.has(firstKeyword(only))) return false;
+  // `SELECT … INTO @var / INTO OUTFILE / INTO <table>` returns no result set.
+  if (/\binto\b/i.test(stripSqlComments(only))) return false;
+  return true;
+}

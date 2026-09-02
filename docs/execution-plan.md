@@ -23,9 +23,14 @@ Status snapshot as of the initial build. Legend: ✅ done · 🟡 partial · ⬜
 - ✅ `@custos/driver-azuresql` (mssql): SQL auth, **Windows/NTLM (domain)** auth, and
   Azure AD access-token auth; schema/FK introspection, multi-recordset, cancel via
   `request.cancel()`.
-- 🟡 **Row streaming for `maxRows`** — both drivers currently fetch then truncate.
-  Switch to streaming so large results stop fetching early. (`toResultSet` already
-  flags `truncated`.)
+- ✅ **Row streaming for `maxRows`** — a single capped result-set statement streams
+  and stops fetching one row past the cap (gated by `canStreamSelect` in
+  `@custos/core`), so a huge `SELECT` no longer buffers the whole table before
+  truncating; peak memory is bounded to ~`maxRows`. MySQL destroys the row stream;
+  Azure SQL cancels the request. Everything else keeps the buffered path. **Verified
+  live** on real MySQL (`main/integration/mysql-live.js`) and real SQL Server
+  (`main/integration/mssql-live.js`), including connection health after repeated
+  early cancels.
 - 🟡 **Server-side statement timeout** — mysql2 v3 dropped per-query `timeout`; enforce
   via the AbortSignal path. mssql: wire `requestTimeout`.
 
@@ -159,11 +164,8 @@ dispatcher (`main/src/dispatch.ts`).
 feed are public, and the release pipeline auto-publishes on tag (notes-gated). Remaining
 hardening/robustness, roughly in priority order:
 
-- **Web host resilience** — a driver connect error (e.g. a saved NTLM connection missing
-  its in-memory password after a restart) currently escapes the dispatcher's `try/catch`
-  and crashes the Node server. Guard the connect path and add a process-level backstop so
-  one bad connection can't take down the host.
-- **Row streaming for `maxRows`** (Phase 2) — both drivers still fetch-then-truncate; stop
-  fetching once the cap is hit. Needs live testing on MySQL *and* Azure SQL.
+- ✅ **Web host resilience** — driver-input validation + process-level backstops so one
+  bad connection can't take down the host (also the Electron main process).
+- ✅ **Row streaming for `maxRows`** — done for MySQL and Azure SQL; verified live on both.
 - **Component states** (1i) — tree connecting/error chips, query-cancel state.
 - **Encrypted-at-rest secrets for the web host** (Phase 7).

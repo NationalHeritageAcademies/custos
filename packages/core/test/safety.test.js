@@ -9,6 +9,7 @@ const {
   firstKeyword,
   isReadOnlyBatch,
   firstMutatingKind,
+  canStreamSelect,
 } = require('../dist/index.js');
 
 test('firstKeyword ignores leading comments and whitespace', () => {
@@ -73,4 +74,26 @@ test('analyzeBatch analyzes each statement', () => {
   assert.equal(analyses.length, 2);
   assert.equal(analyses[0].kind, 'read');
   assert.equal(analyses[1].kind, 'ddl');
+});
+
+test('canStreamSelect streams a single capped result-set statement', () => {
+  assert.equal(canStreamSelect('SELECT * FROM t', 100), true);
+  assert.equal(canStreamSelect('  select id from t where x = 1', 100), true);
+  assert.equal(canStreamSelect('/* note */ SELECT 1', 100), true);
+  assert.equal(canStreamSelect('SHOW TABLES', 100), true);
+});
+
+test('canStreamSelect refuses when there is no row cap', () => {
+  assert.equal(canStreamSelect('SELECT * FROM t', undefined), false);
+  assert.equal(canStreamSelect('SELECT * FROM t', 0), false);
+});
+
+test('canStreamSelect refuses non-result-set, multi-statement, INTO, and WITH', () => {
+  assert.equal(canStreamSelect('UPDATE t SET x = 1 WHERE id = 1', 100), false);
+  assert.equal(canStreamSelect('CREATE TABLE t (id INT)', 100), false);
+  assert.equal(canStreamSelect('SET @x = 1', 100), false);
+  assert.equal(canStreamSelect('SELECT 1; SELECT 2', 100), false);
+  assert.equal(canStreamSelect('SELECT id INTO @x FROM t', 100), false);
+  assert.equal(canStreamSelect('SELECT * INTO copy FROM t', 100), false);
+  assert.equal(canStreamSelect('WITH c AS (SELECT 1 AS n) SELECT * FROM c', 100), false);
 });
