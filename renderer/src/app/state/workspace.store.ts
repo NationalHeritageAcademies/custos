@@ -4,6 +4,7 @@ import type {
   ConnectionField,
   ConnectionSecrets,
   DriverInfo,
+  QueryLanguage,
   ResultSet,
   SignInState,
   StatementAnalysis,
@@ -320,6 +321,20 @@ export class WorkspaceStore {
   readonly activeConnection = computed(() =>
     this.connections().find((c) => c.id === this.activeConnectionId()) ?? null,
   );
+
+  /** The driver behind the active connection, for capability-driven UI. */
+  readonly activeDriver = computed<DriverInfo | null>(() => {
+    const driverId = this.activeConnection()?.driverId;
+    return driverId ? (this.drivers().find((d) => d.metadata.id === driverId) ?? null) : null;
+  });
+
+  /**
+   * The language the editor is currently in. Drivers that do not say otherwise
+   * speak SQL, so this is 'sql' until a MongoDB connection is active.
+   */
+  readonly queryLanguage = computed<QueryLanguage>(
+    () => this.activeDriver()?.capabilities.queryLanguage ?? 'sql',
+  );
   readonly fetched = computed(() => this.result()?.rows.length ?? 0);
   readonly truncated = computed(() => this.result()?.truncated ?? false);
 
@@ -470,11 +485,20 @@ export class WorkspaceStore {
   private async useTable(node: TreeNode): Promise<void> {
     if (node.database) await this.setActive(node.connectionId, node.database);
     else this.activeConnectionId.set(node.connectionId);
-    const name = node.schema ? `${node.schema}.${node.table!.name}` : node.table!.name;
-    const tab = makeTab(node.table!.name, `SELECT * FROM ${name};`);
+    const tab = makeTab(node.table!.name, this.previewQuery(node));
     this.tabs.set([...this.tabs(), tab]);
     this.activeTabId.set(tab.id);
     void this.run();
+  }
+
+  /** The "show me this table" query, in the active connection's own language. */
+  private previewQuery(node: TreeNode): string {
+    const table = node.table!;
+    if (this.queryLanguage() === 'mongodb') {
+      return `db.getCollection(${JSON.stringify(table.name)}).find({}).limit(50)`;
+    }
+    const name = node.schema ? `${node.schema}.${table.name}` : table.name;
+    return `SELECT * FROM ${name};`;
   }
 
   /** Loaded table names across the tree — feeds editor autocomplete. */

@@ -4,7 +4,7 @@
 
 **Keeper of your queries.**
 
-A lightweight, open-source desktop database client for Azure SQL, MySQL, and more —
+A lightweight, open-source desktop database client for Azure SQL, MySQL, MongoDB, and more —
 a calmer alternative to DataGrip that *guards* your data as much as it queries it.
 
 </div>
@@ -20,15 +20,18 @@ token layer), and its "guardian" features — keychain-stored credentials, per-c
 read-only mode, and confirmation prompts before unbounded writes — are built in, not
 bolted on.
 
-> **Status:** early. The backend (driver contract, MySQL + Azure SQL drivers,
+> **Status:** early. The backend (driver contract, MySQL + Azure SQL + MongoDB drivers,
 > engine, IPC) is implemented and tested; the renderer implements the main window
 > from the design system with live theming. See [docs/execution-plan.md](docs/execution-plan.md)
 > for exactly what's done and what's next.
 
 ## Features
 
-- **Pluggable drivers** — Azure SQL and MySQL today; any engine tomorrow. See
+- **Pluggable drivers** — Azure SQL, MySQL and MongoDB today; any engine tomorrow. See
   [CONTRIBUTING.md](CONTRIBUTING.md#how-to-add-a-driver).
+- **Not only SQL** — MongoDB connections take mongosh statements
+  (`db.orders.find({ total: { $gt: 100 } })`) in the same editor, with the same
+  guardian rules applied to them. See [Querying MongoDB](#querying-mongodb).
 - **Light & dark themes from day one** — one design-token layer, switched via a
   Light / Dark / System toggle that follows the OS.
 - **Microsoft Entra ID sign-in (with MFA)** — connect to Azure SQL as *you*, with no
@@ -37,7 +40,9 @@ bolted on.
   [Signing in to Azure SQL with Microsoft Entra ID](#signing-in-to-azure-sql-with-microsoft-entra-id).
 - **Guardian safety** — OS-keychain credential storage (never plaintext),
   per-connection **read-only** mode, and confirm-before-run for `UPDATE`/`DELETE`
-  without a `WHERE`, `TRUNCATE`, and `DROP`.
+  without a `WHERE`, `TRUNCATE`, and `DROP` — and, on MongoDB, for an unfiltered
+  `deleteMany`/`updateMany`, a `drop()`, or an aggregation that `$out`s over a
+  collection.
 - **Schema-aware workspace** — connection tree, tabbed SQL editor, virtualized
   results grid, multiple result sets, query history.
 - **Import from DataGrip** — bring in existing connections from a JetBrains
@@ -88,6 +93,8 @@ packages/core            @custos/core          Driver contract, registry, result
 packages/shared          @custos/shared        Typed IPC contract (main <-> renderer)
 packages/driver-mysql    @custos/driver-mysql  MySQL driver (mysql2)
 packages/driver-azuresql @custos/driver-azuresql  Azure SQL driver (mssql)
+packages/driver-mongodb  @custos/driver-mongodb   MongoDB driver (mongodb) — shell
+                                                parser + its own safety analyzer
 main/                    @custos/app           Electron main: engine, IPC, stores, shell
 renderer/                custos                Angular app (design-system UI, theming)
 ```
@@ -143,7 +150,39 @@ npm run app:dev      # launches Electron with CUSTOS_DEV_SERVER_URL set
 ```bash
 npm test                                   # unit suites (no DB needed)
 npm run test:integration:mysql -w @custos/app   # live MySQL harness (see CONTRIBUTING)
+npm run test:integration:mongo -w @custos/app   # live MongoDB harness (seeds + drops its own db)
 ```
+
+## Querying MongoDB
+
+A MongoDB connection uses the same editor, but the language is mongosh rather than
+SQL — the editor's highlighting, autocomplete and safety analysis all switch with it.
+
+```js
+use shop
+db.orders.find({ total: { $gt: 100 } }).sort({ placedAt: -1 }).limit(20)
+db.orders.aggregate([{ $group: { _id: "$status", n: { $sum: 1 } } }])
+db.orders.updateMany({ status: "new" }, { $set: { status: "queued" } })
+db.runCommand({ collStats: "orders" })
+```
+
+What Custos accepts is a *subset*, deliberately: `use`, `show dbs`,
+`show collections`, and `db.<collection>.<method>(…)` (with the usual cursor chain —
+`sort`, `limit`, `skip`, `project`, `hint`, `collation`, `maxTimeMS`), plus the
+database-level methods and `db.runCommand({ … })` for anything not modelled directly.
+Use `db.getCollection("name with spaces")` for collection names that are not
+identifiers.
+
+Arguments are relaxed JSON — unquoted keys, single quotes, trailing commas, `/regex/i`
+literals, and the BSON constructors the shell prints (`ObjectId("…")`, `ISODate("…")`,
+`NumberLong`, `NumberInt`, `NumberDecimal`, `UUID`, `BinData`, `Timestamp`, `MinKey`,
+`MaxKey`). There are **no variables, no control flow, and no function definitions**:
+Custos parses a statement's shape, it does not run JavaScript.
+
+Because collections are schemaless, the tree infers a collection's fields by sampling
+up to 100 documents; a field that holds more than one BSON type is shown as `mixed`.
+Result columns are the union of the top-level fields in the documents returned, and
+nested documents and arrays are shown as JSON in their cell.
 
 ## Privacy
 

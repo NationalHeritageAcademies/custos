@@ -121,6 +121,13 @@ export type ConnectionSecrets = Readonly<Record<string, string>>;
 
 export type ParamStyle = 'positional' | 'named' | 'none';
 
+/**
+ * The language a driver's editor speaks. Drives editor highlighting and the
+ * wording the UI uses ("SQL" vs "query"); the engine keys nothing off it, since
+ * safety analysis comes from the driver's own {@link DatabaseDriver.analyzer}.
+ */
+export type QueryLanguage = 'sql' | 'mongodb';
+
 /** What a driver can and cannot do, so the UI adapts rather than assumes. */
 export interface DriverCapabilities {
   readonly supportsSchemas: boolean;
@@ -129,6 +136,8 @@ export interface DriverCapabilities {
   readonly supportsCancel: boolean;
   readonly paramStyle: ParamStyle;
   readonly defaultPort: number;
+  /** Defaults to 'sql' when a driver does not say otherwise. */
+  readonly queryLanguage?: QueryLanguage;
 }
 
 export interface DriverMetadata {

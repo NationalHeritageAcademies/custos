@@ -3,9 +3,9 @@ import {
   ConnectionError,
   QueryError,
   ReadOnlyViolationError,
-  analyzeBatch,
-  firstMutatingKind,
+  firstMutatingAnalysis,
   isInteractiveAuthDriver,
+  sqlAnalyzer,
   type ColumnMeta,
   type ConnectionConfig,
   type ConnectionSecrets,
@@ -18,6 +18,7 @@ import {
   type SignInRequirement,
   type SignInState,
   type StatementAnalysis,
+  type StatementAnalyzer,
   type TableRef,
   type TestConnectionResult,
 } from '@custos/core';
@@ -282,8 +283,28 @@ export class ConnectionManager {
     return true;
   }
 
-  analyzeSql(sql: string): StatementAnalysis[] {
-    return analyzeBatch(sql);
+  /**
+   * How a connection's query text is classified. Not every driver speaks SQL —
+   * a driver that doesn't supplies its own analyzer, so the guardian rules
+   * below read `db.users.deleteMany({})` as a write just as they read
+   * `DELETE FROM users`. Without a connection (or for an engine that never
+   * registered one) the SQL analyzer is the default.
+   */
+  private analyzerFor(config: ConnectionConfig | undefined): StatementAnalyzer {
+    if (!config || !this.registry.has(config.driverId)) return sqlAnalyzer;
+    return this.registry.get(config.driverId).analyzer ?? sqlAnalyzer;
+  }
+
+  /**
+   * Classify a batch for the UI, in the language of the given connection.
+   * `connectionId` is optional so the editor can analyze before anything is
+   * open; it then falls back to SQL.
+   */
+  async analyzeSql(sql: string, connectionId?: string): Promise<StatementAnalysis[]> {
+    const config = connectionId
+      ? (this.openConfigs.get(connectionId) ?? (await this.connectionStore.get(connectionId)) ?? undefined)
+      : undefined;
+    return this.analyzerFor(config).analyzeBatch(sql);
   }
 
   /**
@@ -295,16 +316,17 @@ export class ConnectionManager {
   async runQuery(input: RunQueryInput): Promise<QueryResult> {
     const connection = this.requireOpen(input.connectionId);
     const config = this.openConfigs.get(input.connectionId);
+    const analyses = this.analyzerFor(config).analyzeBatch(input.sql);
 
     if (config?.readOnly) {
-      const mutating = firstMutatingKind(input.sql);
+      const mutating = firstMutatingAnalysis(analyses);
       if (mutating) {
         throw new ReadOnlyViolationError(mutating.keyword);
       }
     }
 
     if (!input.confirmDestructive) {
-      const needsConfirm = this.analyzeSql(input.sql).filter((a) => a.requiresConfirmation);
+      const needsConfirm = analyses.filter((a) => a.requiresConfirmation);
       if (needsConfirm.length > 0) {
         throw new ConfirmationRequiredError(needsConfirm);
       }

@@ -1,12 +1,22 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import type { ConnectionField } from '@custos/shared';
 import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
+import { driverBadge } from '../driver-presentation';
+
+/**
+ * Past this many engines the side-by-side buttons stop being readable — each
+ * one is `flex: 1`, so a fourth squeezes every label — and the picker becomes a
+ * dropdown instead. Raising this is the only change a wider row would need.
+ */
+const ENGINE_BUTTON_LIMIT = 3;
 
 /**
  * New-connection form (design 1e). The engine picker comes from the driver
- * registry; the fields below it are generated entirely from the selected
- * driver's `connectionFields` (type, secret, select options, visibleWhen) — so
- * no engine is special-cased here. Test-connection surfaces live status.
+ * registry — buttons while there are few engines, a dropdown once there are
+ * more than {@link ENGINE_BUTTON_LIMIT} — and the fields below it are generated
+ * entirely from the selected driver's `connectionFields` (type, secret, select
+ * options, visibleWhen), so no engine is special-cased here. Test-connection
+ * surfaces live status.
  */
 @Component({
   selector: 'app-connection-form',
@@ -27,14 +37,25 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
           <div class="body">
             <div class="group">
               <span class="overline">Engine</span>
-              <div class="engines">
-                @for (d of ws.drivers(); track d.metadata.id) {
-                  <button class="engine" [class.sel]="draft.driverId === d.metadata.id" (click)="ws.selectDriver(d.metadata.id)">
-                    <span class="badge" [style.background]="d.metadata.id === 'mysql' ? '#C98A2E' : '#2E8FD9'">{{ d.metadata.id === 'mysql' ? 'MY' : 'AZ' }}</span>
-                    <span class="ename">{{ d.metadata.displayName }}</span>
-                  </button>
-                }
-              </div>
+              @if (compactEngines()) {
+                <div class="engine-picker">
+                  <span class="badge" [style.background]="badge(draft.driverId).color">{{ badge(draft.driverId).label }}</span>
+                  <select class="input" aria-label="Engine" (change)="ws.selectDriver(val($event))">
+                    @for (d of ws.drivers(); track d.metadata.id) {
+                      <option [value]="d.metadata.id" [selected]="draft.driverId === d.metadata.id">{{ d.metadata.displayName }}</option>
+                    }
+                  </select>
+                </div>
+              } @else {
+                <div class="engines">
+                  @for (d of ws.drivers(); track d.metadata.id) {
+                    <button class="engine" [class.sel]="draft.driverId === d.metadata.id" (click)="ws.selectDriver(d.metadata.id)">
+                      <span class="badge" [style.background]="badge(d.metadata.id).color">{{ badge(d.metadata.id).label }}</span>
+                      <span class="ename">{{ d.metadata.displayName }}</span>
+                    </button>
+                  }
+                </div>
+              }
             </div>
 
             <label class="field">
@@ -86,7 +107,7 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
                   Read-only connection
                   <svg width="11" height="11" viewBox="0 0 48 48" fill="var(--accent)"><path d="M24 4 39 9.4v12.4c0 10.2-6.6 16.6-15 19.8-8.4-3.2-15-9.6-15-19.8V9.4L24 4Z"/></svg>
                 </span>
-                <span class="rodesc">Blocks INSERT, UPDATE, DELETE, DROP and DDL before they leave your machine. You can still run SELECT and explain plans.</span>
+                <span class="rodesc">{{ readOnlyBlurb() }}</span>
               </span>
             </div>
 
@@ -129,6 +150,8 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
     .group { display: flex; flex-direction: column; gap: 7px; }
     .overline { font: var(--text-overline); letter-spacing: var(--overline-tracking); text-transform: uppercase; color: var(--text-3); }
     .engines { display: flex; gap: 10px; }
+    .engine-picker { display: flex; align-items: center; gap: 9px; }
+    .engine-picker .input { flex: 1; }
     .engine { flex: 1; display: flex; align-items: center; gap: 9px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--bg); color: var(--text); cursor: pointer; }
     .engine.sel { border: 1.5px solid var(--accent); background: var(--accent-subtle); }
     .engine.sel .ename { color: var(--accent-hover); }
@@ -170,6 +193,17 @@ import { WorkspaceStore, type FieldValue } from '../state/workspace.store';
 })
 export class ConnectionFormComponent {
   readonly ws = inject(WorkspaceStore);
+  readonly badge = driverBadge;
+
+  /** Too many engines for a row of buttons — show a dropdown instead. */
+  readonly compactEngines = computed(() => this.ws.drivers().length > ENGINE_BUTTON_LIMIT);
+
+  /** What read-only actually blocks, named in the engine's own language. */
+  readonly readOnlyBlurb = computed(() =>
+    this.ws.currentDriver()?.capabilities.queryLanguage === 'mongodb'
+      ? 'Blocks inserts, updates, deletes and index/collection changes before they leave your machine. You can still run find, aggregate and count.'
+      : 'Blocks INSERT, UPDATE, DELETE, DROP and DDL before they leave your machine. You can still run SELECT and explain plans.',
+  );
 
   val(event: Event): string {
     return (event.target as HTMLInputElement | HTMLSelectElement).value;

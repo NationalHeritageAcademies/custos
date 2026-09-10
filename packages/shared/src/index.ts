@@ -31,6 +31,7 @@ export type {
   DriverMetadata,
   ForeignKey,
   ParamStyle,
+  QueryLanguage,
   QueryResult,
   ResultSet,
   SignInKind,
@@ -137,7 +138,12 @@ export interface CustosApi {
 
   runQuery(input: RunQueryInput): Promise<QueryResult>;
   cancelQuery(connectionId: string, queryId: string): Promise<void>;
-  analyzeSql(sql: string): Promise<StatementAnalysis[]>;
+  /**
+   * Classify a batch for the safety UI. `connectionId` selects the language to
+   * read it in — a MongoDB connection's statements are not SQL — and defaults
+   * to SQL when omitted.
+   */
+  analyzeSql(sql: string, connectionId?: string): Promise<StatementAnalysis[]>;
 }
 
 /** Names of the methods on {@link CustosApi}; the dispatch key over IPC. */

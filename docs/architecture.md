@@ -9,7 +9,7 @@ Custos is a layered Electron + Angular application whose defining decision is a
 ┌───────────────────────────── Electron main process ─────────────────────────────┐
 │                                                                                  │
 │  bootstrap.ts ── builds ──► DriverRegistry ── holds ──► DatabaseDriver plugins   │
-│       │                          ▲                         (mysql, azuresql, …)  │
+│       │                          ▲                 (mysql, azuresql, mongodb, …) │
 │       ▼                          │                                               │
 │  ConnectionManager (engine) ─────┘   opens ► DriverConnection (live sockets)     │
 │       │   • read-only enforcement                                                │
@@ -41,7 +41,9 @@ the main process.
   - Domain types (`ConnectionConfig`, `ConnectionField`, `QueryResult`, …).
   - Result normalization (`toResultSet`, …).
   - **Safety guards** (`analyzeStatement`, `firstMutatingKind`, `isReadOnlyBatch`) —
-    the lightweight, dependency-free heuristics behind the "guardian" behavior.
+    the lightweight, dependency-free heuristics behind the "guardian" behavior, plus
+    the `StatementAnalyzer` interface a non-SQL driver implements so those rules
+    still apply to its language (`sqlAnalyzer` is the default).
   - Typed errors (`ReadOnlyViolationError`, `ConfirmationRequiredError`,
     `SignInRequiredError`, …).
   - **Interactive sign-in contract** (`InteractiveAuthDriver`, `SignInPrompt`,

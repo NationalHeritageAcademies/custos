@@ -20,6 +20,19 @@ export interface StatementAnalysis {
   readonly reason?: string;
 }
 
+/**
+ * A query language's safety analyzer. Every driver's query text is analyzed
+ * before it runs (read-only enforcement, destructive-statement confirmation),
+ * but not every driver speaks SQL — a driver supplies its own analyzer via
+ * {@link DatabaseDriver.analyzer} and the engine uses that instead of
+ * {@link sqlAnalyzer}. Analyzers are pure text heuristics: no connection, no
+ * I/O, so they can run before anything is sent to a server.
+ */
+export interface StatementAnalyzer {
+  /** Split a batch into statements and classify each one. */
+  analyzeBatch(source: string): StatementAnalysis[];
+}
+
 const WRITE_KEYWORDS = new Set([
   'insert',
   'update',
@@ -210,6 +223,18 @@ export function analyzeBatch(sql: string): StatementAnalysis[] {
   return splitStatements(sql).map(analyzeStatement);
 }
 
+/** The SQL implementation of {@link StatementAnalyzer}; the engine's default. */
+export const sqlAnalyzer: StatementAnalyzer = { analyzeBatch };
+
+/**
+ * The first statement a read-only connection must refuse, given an already
+ * computed analysis. Language-agnostic, so the engine can enforce read-only on
+ * any driver's analyzer output.
+ */
+export function firstMutatingAnalysis(analyses: StatementAnalysis[]): StatementAnalysis | null {
+  return analyses.find((a) => a.kind === 'write' || a.kind === 'ddl') ?? null;
+}
+
 /** True when every statement in the batch is a read (safe on read-only). */
 export function isReadOnlyBatch(sql: string): boolean {
   const analyses = analyzeBatch(sql);
@@ -222,7 +247,7 @@ export function isReadOnlyBatch(sql: string): boolean {
  * enforce the per-connection read-only flag.
  */
 export function firstMutatingKind(sql: string): StatementAnalysis | null {
-  return analyzeBatch(sql).find((a) => a.kind === 'write' || a.kind === 'ddl') ?? null;
+  return firstMutatingAnalysis(analyzeBatch(sql));
 }
 
 /**

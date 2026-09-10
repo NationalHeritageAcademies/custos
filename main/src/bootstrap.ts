@@ -1,6 +1,7 @@
 import * as path from 'node:path';
 import { DriverRegistry } from '@custos/core';
 import { AzureSqlDriver } from '@custos/driver-azuresql';
+import { MongoDbDriver } from '@custos/driver-mongodb';
 import { MySqlDriver } from '@custos/driver-mysql';
 import { ConnectionManager } from './engine';
 import { JsonConnectionStore } from './store/json-connection-store';
@@ -14,6 +15,7 @@ export function buildRegistry(): DriverRegistry {
   const registry = new DriverRegistry();
   registry.register(new MySqlDriver());
   registry.register(new AzureSqlDriver());
+  registry.register(new MongoDbDriver());
   return registry;
 }
 

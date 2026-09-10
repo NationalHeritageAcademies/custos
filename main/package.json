@@ -9,11 +9,13 @@
     "pretest": "tsc -b",
     "test": "node --test",
     "test:integration:mysql": "tsc -b && node integration/mysql-live.js",
+    "test:integration:mongo": "tsc -b && node integration/mongo-live.js",
     "start": "electron ."
   },
   "dependencies": {
     "@custos/core": "*",
     "@custos/driver-azuresql": "*",
+    "@custos/driver-mongodb": "*",
     "@custos/driver-mysql": "*",
     "@custos/shared": "*"
   },

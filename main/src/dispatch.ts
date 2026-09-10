@@ -34,7 +34,7 @@ export function createDispatcher(
     setActiveDatabase: (id, database) => manager.setActiveDatabase(id, database),
     runQuery: (input) => manager.runQuery(input),
     cancelQuery: (id, queryId) => manager.cancelQuery(id, queryId),
-    analyzeSql: (sqlText) => manager.analyzeSql(sqlText),
+    analyzeSql: (sqlText, connectionId) => manager.analyzeSql(sqlText, connectionId),
   };
 
   return async (method, args) => {

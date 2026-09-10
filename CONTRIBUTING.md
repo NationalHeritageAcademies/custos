@@ -31,6 +31,7 @@ npm run build        # production build
 | `packages/shared` | `@custos/shared` | Typed IPC contract shared by main and renderer. Types only. |
 | `packages/driver-mysql` | `@custos/driver-mysql` | MySQL driver. |
 | `packages/driver-azuresql` | `@custos/driver-azuresql` | Azure SQL driver. |
+| `packages/driver-mongodb` | `@custos/driver-mongodb` | MongoDB driver: a mongosh-subset parser plus its own safety analyzer. |
 | `main` | `@custos/app` | Electron main process: engine (`ConnectionManager`), IPC, credential/connection stores, window shell. |
 | `renderer` | `custos` | Angular UI. Reads design tokens; talks to main only through `window.custos`. |
 
@@ -111,6 +112,36 @@ prompt says, and a `connect` that throws `SignInRequiredError` (code
 `SIGN_IN_REQUIRED`) makes the UI sign the user in and retry the interrupted call. See
 `packages/driver-azuresql/src/entra.ts` for a worked example.
 
+### 2c. (Optional) an engine that doesn't speak SQL
+
+Custos analyzes every batch before it runs — that is how the read-only flag and the
+confirm-before-destructive prompt work — and the default analyzer reads SQL keywords.
+An engine with another language must supply its own, or its writes will classify as
+`unknown` and slip past the read-only check:
+
+```ts
+import { type StatementAnalyzer } from '@custos/core';
+
+export const myAnalyzer: StatementAnalyzer = {
+  analyzeBatch: (source) => /* one StatementAnalysis per statement */,
+};
+
+export class MyEngineDriver implements DatabaseDriver {
+  readonly capabilities = { /* … */ queryLanguage: 'mongodb' };  // editor language
+  readonly analyzer = myAnalyzer;                                 // safety rules
+}
+```
+
+Two rules for an analyzer: never throw (it runs on half-typed text — report
+`unknown` instead), and classify conservatively, since a false positive only costs
+the user a confirmation while a false negative loses data. `packages/driver-mongodb`
+is the worked example — `src/parse.ts` turns shell text into statements and
+`src/analyze.ts` classifies them.
+
+`queryLanguage` is separate: it only picks the editor's highlighting and
+autocomplete (`renderer/src/app/components/code-editor.component.ts`), and defaults
+to `'sql'`.
+
 ### 3. Register it
 
 Add one line to `main/src/bootstrap.ts`:
@@ -121,9 +152,12 @@ import { MyEngineDriver } from '@custos/driver-myengine';
 registry.register(new MyEngineDriver());
 ```
 
-Add the package to `main`'s dependencies and to the root `tsconfig.json` references.
+Add the package to `main`'s dependencies (and `package.json` / `main/tsconfig.json`
+references, plus a badge entry in `renderer/src/app/driver-presentation.ts`).
 That's it — the connection form, tree, editor, and results grid all adapt to your
-driver's declared `capabilities` and `connectionFields` automatically.
+driver's declared `capabilities` and `connectionFields` automatically. (The form's
+engine picker is a row of buttons up to `ENGINE_BUTTON_LIMIT` engines and a dropdown
+beyond it, so a fourth driver does not squeeze the row.)
 
 ### 4. Test it
 
@@ -131,7 +165,7 @@ Follow `packages/core/test` and `main/test` for the style: `node:test` + `node:a
 importing compiled `dist`. Prefer testing your result-normalization and metadata
 queries against a throwaway container.
 
-## Live integration test (real MySQL)
+## Live integration tests (real databases)
 
 The unit suites mock the DB; there is also a live harness that drives the real driver
 through the engine against an actual MySQL server:
@@ -144,8 +178,20 @@ docker compose -f db/docker-compose.yml down        # tear down
 ```
 
 The harness (`main/integration/mysql-live.js`) reads `CUSTOS_MYSQL_*` env vars and
-defaults to the compose settings. It is intentionally not part of `npm test` so CI and
-day-to-day runs don't require a database.
+defaults to the compose settings. It assumes a **fresh** container (one check asserts
+an absolute value after a write), so recreate it before a re-run.
+
+There is an equivalent for MongoDB, which seeds and drops its own database and so is
+safe to re-run against the same container:
+
+```bash
+docker compose -f db/docker-compose.yml up -d mongo  # MongoDB on 127.0.0.1:27018
+npm run test:integration:mongo -w @custos/app        # 15 checks against real MongoDB
+docker compose -f db/docker-compose.yml down
+```
+
+`main/integration/mongo-live.js` reads `CUSTOS_MONGO_*` env vars. Neither harness is
+part of `npm test`, so CI and day-to-day runs don't require a database.
 
 ## Conventions
 
