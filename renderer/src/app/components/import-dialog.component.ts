@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { WorkspaceStore } from '../state/workspace.store';
+import { driverBadge } from '../driver-presentation';
 
 /**
  * Import connections from a DataGrip / JetBrains `dataSources.xml`. DataGrip
@@ -44,9 +45,7 @@ import { WorkspaceStore } from '../state/workspace.store';
               <div class="list">
                 @for (c of ws.importList(); track $index) {
                   <div class="item" [class.unsupported]="!c.driverId">
-                    <span class="badge" [style.background]="c.driverId === 'mysql' ? '#C98A2E' : c.driverId ? '#2E8FD9' : 'var(--text-3)'">
-                      {{ c.driverId === 'mysql' ? 'MY' : c.driverId ? 'AZ' : '—' }}
-                    </span>
+                    <span class="badge" [style.background]="badge(c.driverId).color">{{ badge(c.driverId).label }}</span>
                     <div class="meta">
                       <div class="nm">{{ c.name }} @if (c.readOnly) { <span class="ro">RO</span> }</div>
                       <div class="url">{{ c.jdbcUrl }}</div>
@@ -111,6 +110,7 @@ import { WorkspaceStore } from '../state/workspace.store';
 })
 export class ImportDialogComponent {
   readonly ws = inject(WorkspaceStore);
+  readonly badge = driverBadge;
 
   readonly supportedCount = computed(() => this.ws.importList().filter((c) => c.driverId).length);
 

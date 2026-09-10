@@ -46,7 +46,7 @@ const api: CustosApi = {
   setActiveDatabase: (id, database) => invoke('setActiveDatabase', id, database),
   runQuery: (input) => invoke('runQuery', input),
   cancelQuery: (id, queryId) => invoke('cancelQuery', id, queryId),
-  analyzeSql: (sqlText) => invoke('analyzeSql', sqlText),
+  analyzeSql: (sqlText, connectionId) => invoke('analyzeSql', sqlText, connectionId),
 };
 
 contextBridge.exposeInMainWorld('custos', api);

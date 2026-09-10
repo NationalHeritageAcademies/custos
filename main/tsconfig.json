@@ -8,6 +8,7 @@
   "references": [
     { "path": "../packages/core" },
     { "path": "../packages/shared" },
+    { "path": "../packages/driver-mongodb" },
     { "path": "../packages/driver-mysql" },
     { "path": "../packages/driver-azuresql" }
   ],

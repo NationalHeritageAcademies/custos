@@ -16,7 +16,7 @@ import { WorkspaceStore } from '../state/workspace.store';
       </svg>
       <div class="name">Custos</div>
       <div class="tagline">Keeper of your queries.</div>
-      <div class="blurb">No connections yet. Point Custos at an Azure SQL or MySQL server — credentials stay in your OS keychain.</div>
+      <div class="blurb">No connections yet. Point Custos at an Azure SQL, MySQL or MongoDB server — credentials stay in your OS keychain.</div>
       <div class="cta">
         <button class="primary" (click)="ws.openConnectionForm()">
           <svg width="13" height="13" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.4" fill="none"><path d="M12 5v14M5 12h14"/></svg>

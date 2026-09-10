@@ -1,6 +1,5 @@
 import {
   analyzeBatch,
-  firstMutatingKind,
   type ResultSet,
   type SqlValue,
 } from '@custos/core';
@@ -32,6 +31,7 @@ function bridgeError(code: string, message: string, analyses?: StatementAnalysis
 const DEMO_CONNECTIONS: ConnectionConfig[] = [
   { id: 'sales-prod', name: 'sales-prod', driverId: 'azuresql', readOnly: true, params: { server: 'sales.database.windows.net', database: 'analytics' } },
   { id: 'shop-mysql', name: 'shop-mysql', driverId: 'mysql', readOnly: false, params: { host: 'shop.internal', database: 'shopdb' } },
+  { id: 'events-mongo', name: 'events-mongo', driverId: 'mongodb', readOnly: false, params: { mode: 'fields', host: 'events.internal', port: 27017, database: 'appdb' } },
 ];
 
 // Each connection exposes several databases, each with its own tables — so the
@@ -39,10 +39,13 @@ const DEMO_CONNECTIONS: ConnectionConfig[] = [
 const DATABASES: Record<string, string[]> = {
   'sales-prod': ['analytics', 'reporting', 'staging'],
   'shop-mysql': ['shopdb', 'legacy_orders'],
+  'events-mongo': ['appdb', 'telemetry'],
 };
 
 const az = (database: string, name: string, kind: 'table' | 'view' = 'table'): TableRef => ({ database, schema: 'dbo', name, kind });
 const my = (database: string, name: string): TableRef => ({ database, schema: null, name, kind: 'table' });
+// Mongo collections sit directly under a database, like MySQL tables.
+const mg = my;
 
 const TABLES_BY_DB: Record<string, Record<string, TableRef[]>> = {
   'sales-prod': {
@@ -54,7 +57,67 @@ const TABLES_BY_DB: Record<string, Record<string, TableRef[]>> = {
     shopdb: [my('shopdb', 'products'), my('shopdb', 'carts'), my('shopdb', 'inventory')],
     legacy_orders: [my('legacy_orders', 'orders_2019'), my('legacy_orders', 'orders_2020')],
   },
+  'events-mongo': {
+    appdb: [mg('appdb', 'users'), mg('appdb', 'sessions'), mg('appdb', 'feature_flags')],
+    telemetry: [mg('telemetry', 'page_views'), mg('telemetry', 'errors')],
+  },
 };
+
+/** Documents for the MongoDB demo connection — deliberately ragged, as a
+ * schemaless collection is: `plan` and `traits` are not on every document. */
+const DEMO_DOCUMENTS: Record<string, unknown>[] = [
+  { _id: '66f1a0c2e13b4a0b8c1d2e01', email: 'ada@example.com', plan: 'team', signedUpAt: new Date('2026-01-14T09:12:00Z'), traits: { region: 'eu-west', beta: true } },
+  { _id: '66f1a0c2e13b4a0b8c1d2e02', email: 'grace@example.com', plan: 'business', signedUpAt: new Date('2026-02-03T16:40:00Z'), traits: { region: 'us-east', beta: false } },
+  { _id: '66f1a0c2e13b4a0b8c1d2e03', email: 'linus@example.com', signedUpAt: new Date('2026-02-19T11:05:00Z') },
+  { _id: '66f1a0c2e13b4a0b8c1d2e04', email: 'barbara@example.com', plan: 'solo', signedUpAt: new Date('2026-03-07T08:22:00Z'), traits: { region: 'ap-south', beta: true } },
+];
+
+/** Build a result set from documents the way the real driver does: columns are
+ * the union of top-level fields, and a missing field reads as null. */
+function documentResultSet(count: number): ResultSet {
+  const documents = DEMO_DOCUMENTS.slice(0, Math.max(1, count));
+  const names: string[] = [];
+  for (const doc of documents) for (const key of Object.keys(doc)) if (!names.includes(key)) names.push(key);
+  const columns: ColumnMeta[] = names.map((name) => ({ name, dataType: MONGO_TYPES[name] ?? 'object', nullable: true }));
+  const rows = documents.map((doc) => names.map((name) => (doc[name] ?? null) as SqlValue));
+  return { columns, rows, truncated: false };
+}
+const MONGO_TYPES: Record<string, string> = { _id: 'objectId', email: 'string', plan: 'string', signedUpAt: 'date', traits: 'object' };
+
+/** Whether text is a MongoDB shell statement rather than SQL. */
+function isMongoSource(source: string): boolean {
+  return /^\s*(db\.|use\s|show\s)/.test(source);
+}
+
+/**
+ * The demo's stand-in for the MongoDB analyzer. The real one parses the
+ * statement (see @custos/driver-mongodb); this only has to be right about the
+ * cases the demo shows, so it matches on the method name.
+ */
+function analyzeMongoDemo(source: string): StatementAnalysis[] {
+  return source
+    .split(/;|\n/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((statement) => {
+      const method = /\.([A-Za-z]+)\s*\(/.exec(statement)?.[1] ?? statement.split(/\s+/)[0] ?? '';
+      const write = /^(insert|update|replace|delete|remove|save|findOneAnd|bulkWrite)/.test(method);
+      const ddl = /^(create|drop|rename)/i.test(method);
+      const unfilteredDelete = /\.(deleteMany|updateMany)\(\s*\{\s*\}/.test(statement);
+      const drops = /^drop/i.test(method);
+      return {
+        sql: statement,
+        kind: ddl ? ('ddl' as const) : write ? ('write' as const) : ('read' as const),
+        keyword: method,
+        requiresConfirmation: unfilteredDelete || drops,
+        reason: unfilteredDelete
+          ? `${method}() has an empty filter and will affect every document in the collection.`
+          : drops
+            ? `${method}() permanently removes data.`
+            : undefined,
+      };
+    });
+}
 
 const CHURN_COLUMNS: ColumnMeta[] = [
   { name: 'id', dataType: 'int' },
@@ -95,9 +158,10 @@ function churnRows(count: number): SqlValue[][] {
 /**
  * In-browser stand-in for the Electron main process. Implements the exact
  * {@link CustosApi} surface with representative data, and reuses the real
- * {@link analyzeBatch}/{@link firstMutatingKind} guards from @custos/core so
- * read-only and destructive-confirmation behavior matches the engine. Used
- * automatically when `window.custos` is absent (i.e. running outside Electron).
+ * {@link analyzeBatch} guard from @custos/core (with a MongoDB stand-in for the
+ * one connection that does not speak SQL) so read-only and
+ * destructive-confirmation behavior matches the engine. Used automatically when
+ * `window.custos` is absent (i.e. running outside Electron).
  */
 export class DemoBackend implements CustosApi {
   private readonly connections: ConnectionConfig[];
@@ -139,6 +203,23 @@ export class DemoBackend implements CustosApi {
           { key: 'password', label: 'Password', type: 'password', secret: true },
           { key: 'database', label: 'Database', type: 'string', placeholder: 'optional' },
           { key: 'ssl', label: 'Use TLS', type: 'boolean', default: false, help: 'Require an encrypted connection to the server.' },
+        ],
+      },
+      {
+        metadata: { id: 'mongodb', displayName: 'MongoDB', iconId: 'mongodb' },
+        capabilities: { supportsSchemas: false, supportsTransactions: true, supportsMultipleResultSets: true, supportsCancel: true, paramStyle: 'none', defaultPort: 27017, queryLanguage: 'mongodb' },
+        connectionFields: [
+          { key: 'mode', label: 'Connect using', type: 'select', required: true, default: 'fields', options: [ { value: 'fields', label: 'Host and port' }, { value: 'uri', label: 'Connection string' } ] },
+          { key: 'uri', label: 'Connection string', type: 'password', secret: true, required: true, placeholder: 'mongodb+srv://user:password@cluster.example.net/mydb', help: 'Kept in the OS keychain, because a connection string usually carries the password.', visibleWhen: { field: 'mode', equals: 'uri' } },
+          { key: 'srv', label: 'DNS seed list (mongodb+srv)', type: 'boolean', default: false, help: 'For Atlas and other clusters advertised through SRV records. The port is taken from DNS.', visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'host', label: 'Host', type: 'string', required: true, default: 'localhost', visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'port', label: 'Port', type: 'number', default: 27017, visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'database', label: 'Database', type: 'string', placeholder: 'optional \u2014 pick one from the tree later' },
+          { key: 'user', label: 'User', type: 'string', visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'password', label: 'Password', type: 'password', secret: true, visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'authSource', label: 'Auth database', type: 'string', placeholder: 'admin', help: 'The database the user is defined in. Defaults to admin.', visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'replicaSet', label: 'Replica set', type: 'string', placeholder: 'optional', visibleWhen: { field: 'mode', equals: 'fields' } },
+          { key: 'tls', label: 'Use TLS', type: 'boolean', default: false, help: 'Require an encrypted connection. Always on for mongodb+srv.', visibleWhen: { field: 'mode', equals: 'fields' } },
         ],
       },
     ];
@@ -225,8 +306,10 @@ export class DemoBackend implements CustosApi {
     return schema ? all.filter((t) => (t.schema ?? '') === schema) : all;
   }
 
-  async listColumns(): Promise<ColumnMeta[]> {
-    return CHURN_COLUMNS;
+  async listColumns(connectionId: string): Promise<ColumnMeta[]> {
+    // A collection has no declared columns; the real driver infers them by
+    // sampling documents, so the demo shows the same inferred shape.
+    return connectionId === 'events-mongo' ? documentResultSet(DEMO_DOCUMENTS.length).columns : CHURN_COLUMNS;
   }
 
   async listForeignKeys(): Promise<ForeignKey[]> {
@@ -237,21 +320,31 @@ export class DemoBackend implements CustosApi {
     const conn = this.connections.find((c) => c.id === input.connectionId);
     const start = Date.now();
 
-    // Same guardrails the engine enforces, powered by the same core functions.
+    // Same guardrails the engine enforces, read in the same language the
+    // connection speaks — MongoDB statements are not SQL.
+    const mongo = conn?.driverId === 'mongodb' || isMongoSource(input.sql);
+    const analyses = mongo ? analyzeMongoDemo(input.sql) : analyzeBatch(input.sql);
     if (conn?.readOnly) {
-      const mutating = firstMutatingKind(input.sql);
+      const mutating = analyses.find((a) => a.kind === 'write' || a.kind === 'ddl');
       if (mutating) {
         throw bridgeError('READ_ONLY_VIOLATION', `This connection is read-only; refusing to run a "${mutating.keyword}" statement.`);
       }
     }
     if (!input.confirmDestructive) {
-      const needsConfirm = analyzeBatch(input.sql).filter((a) => a.requiresConfirmation);
+      const needsConfirm = analyses.filter((a) => a.requiresConfirmation);
       if (needsConfirm.length > 0) {
         throw bridgeError('CONFIRMATION_REQUIRED', 'This statement requires confirmation before it can run.', needsConfirm);
       }
     }
 
-    const keyword = analyzeBatch(input.sql)[0]?.keyword ?? '';
+    if (mongo) {
+      if (analyses[0]?.kind !== 'read') {
+        return { resultSets: [{ columns: [{ name: 'acknowledged', dataType: 'bool' }, { name: 'modifiedCount', dataType: 'int' }], rows: [[true, 3]], truncated: false }], rowsAffected: 3, executionMs: Date.now() - start + 6 };
+      }
+      return { resultSets: [documentResultSet(input.maxRows ?? 200)], rowsAffected: null, executionMs: Date.now() - start + 18 };
+    }
+
+    const keyword = analyses[0]?.keyword ?? '';
     const isRead = ['select', 'with', 'show', 'describe', 'explain'].includes(keyword);
 
     if (isRead) {
@@ -267,7 +360,8 @@ export class DemoBackend implements CustosApi {
 
   async cancelQuery(): Promise<void> {}
 
-  async analyzeSql(sql: string): Promise<StatementAnalysis[]> {
-    return analyzeBatch(sql);
+  async analyzeSql(sql: string, connectionId?: string): Promise<StatementAnalysis[]> {
+    const conn = connectionId ? this.connections.find((c) => c.id === connectionId) : undefined;
+    return conn?.driverId === 'mongodb' || isMongoSource(sql) ? analyzeMongoDemo(sql) : analyzeBatch(sql);
   }
 }

@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { WorkspaceStore } from '../state/workspace.store';
+import { driverBadge } from '../driver-presentation';
 
 /**
  * The editor context breadcrumb: which connection and database queries run
@@ -12,7 +13,7 @@ import { WorkspaceStore } from '../state/workspace.store';
   template: `
     <div class="bar">
       @if (ws.activeConnection(); as conn) {
-        <span class="badge" [style.background]="conn.driverId === 'mysql' ? '#C98A2E' : '#2E8FD9'">{{ conn.driverId === 'mysql' ? 'MY' : 'AZ' }}</span>
+        <span class="badge" [style.background]="badge(conn.driverId).color">{{ badge(conn.driverId).label }}</span>
         <span class="name">{{ conn.name }}</span>
         @if (ws.activeDatabase(); as db) {
           <span class="sep">/</span>
@@ -54,4 +55,5 @@ import { WorkspaceStore } from '../state/workspace.store';
 })
 export class ContextBarComponent {
   readonly ws = inject(WorkspaceStore);
+  readonly badge = driverBadge;
 }

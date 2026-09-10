@@ -48,5 +48,5 @@ export class CustosClient {
   setActiveDatabase: CustosApi['setActiveDatabase'] = (id, database) => this.require().setActiveDatabase(id, database);
   runQuery: CustosApi['runQuery'] = (input) => this.require().runQuery(input);
   cancelQuery: CustosApi['cancelQuery'] = (id, queryId) => this.require().cancelQuery(id, queryId);
-  analyzeSql: CustosApi['analyzeSql'] = (sql) => this.require().analyzeSql(sql);
+  analyzeSql: CustosApi['analyzeSql'] = (sql, connectionId) => this.require().analyzeSql(sql, connectionId);
 }

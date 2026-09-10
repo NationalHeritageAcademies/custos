@@ -41,8 +41,26 @@ Status snapshot as of the initial build. Legend: ✅ done · 🟡 partial · ⬜
   live** on real MySQL (`main/integration/mysql-live.js`) and real SQL Server
   (`main/integration/mssql-live.js`), including connection health after repeated
   early cancels.
+- ✅ `@custos/driver-mongodb` (mongodb): the first **non-SQL** engine. Connects by
+  host/port or connection string (incl. `mongodb+srv`), infers a collection's fields
+  by sampling documents (a field with two BSON types reads as `mixed`), and takes
+  **mongosh statements** in the editor rather than SQL — `src/parse.ts` parses a
+  deliberate subset (`use`, `show`, `db.<coll>.<method>(…)` + cursor chain,
+  `db.runCommand`, relaxed-JSON args with `/regex/` and BSON constructors) with no
+  variables, control flow, or JS evaluation anywhere. Cursors stop one document past
+  `maxRows`, matching the SQL drivers' capped streaming. **Verified:** 41 unit tests
+  plus a 15-check live harness against real MongoDB 8 (`main/integration/mongo-live.js`),
+  which seeds and drops its own database so it is re-runnable.
+- ✅ **Per-language safety analysis** — the guardian rules were SQL-keyword-shaped, so
+  `db.users.deleteMany({})` would have read as `unknown` and walked past a read-only
+  connection. A driver now publishes its own `StatementAnalyzer`
+  (`DatabaseDriver.analyzer`, default = the SQL one) and `ConnectionManager` classifies
+  each batch through it; `capabilities.queryLanguage` separately selects the editor's
+  highlighting and autocomplete. **Verified:** engine tests that a read-only MongoDB
+  connection refuses `deleteMany`, and that an unfiltered one is held for confirmation.
 - 🟡 **Server-side statement timeout** — mysql2 v3 dropped per-query `timeout`; enforce
-  via the AbortSignal path. mssql: wire `requestTimeout`.
+  via the AbortSignal path. mssql: wire `requestTimeout`. MongoDB passes `timeoutMs`
+  through as `maxTimeMS` on cursors already.
 
 ## Phase 3 — Engine & IPC ✅
 
@@ -177,6 +195,10 @@ hardening/robustness, roughly in priority order:
 - ✅ **Web host resilience** — driver-input validation + process-level backstops so one
   bad connection can't take down the host (also the Electron main process).
 - ✅ **Row streaming for `maxRows`** — done for MySQL and Azure SQL; verified live on both.
+- ✅ **MongoDB support** — driver, shell parser, per-language safety analysis, editor
+  language switching. Follow-ups worth doing: cancel is client-side only for
+  non-cursor operations (there is no `killOp` path yet), and `explain()` is accepted
+  as a chain call but not yet rendered as a plan.
 - **Live Entra sign-in run-through** — the device-code and browser modes are covered by
   unit tests and a simulated click-through; exercise both against a real Azure SQL
   server + Entra tenant (including a token refresh past the first hour).

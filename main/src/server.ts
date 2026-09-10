@@ -2,10 +2,8 @@ import * as http from 'node:http';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as os from 'node:os';
-import { DriverRegistry } from '@custos/core';
-import { AzureSqlDriver } from '@custos/driver-azuresql';
-import { MySqlDriver } from '@custos/driver-mysql';
 import type { CustosApiMethod } from '@custos/shared';
+import { buildRegistry } from './bootstrap';
 import { ConnectionManager, InMemorySecretStore } from './engine';
 import { JsonConnectionStore } from './store/json-connection-store';
 import { createDispatcher } from './dispatch';
@@ -41,11 +39,9 @@ const MIME: Record<string, string> = {
 };
 
 function buildManager(): ConnectionManager {
-  const registry = new DriverRegistry();
-  registry.register(new MySqlDriver());
-  registry.register(new AzureSqlDriver());
+  // Same registry the desktop app builds, so both hosts ship the same drivers.
   return new ConnectionManager(
-    registry,
+    buildRegistry(),
     new JsonConnectionStore(path.join(DATA_DIR, 'connections.json')),
     new InMemorySecretStore(),
   );

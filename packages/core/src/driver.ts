@@ -11,6 +11,7 @@ import type {
   TableRef,
   TestConnectionResult,
 } from './types';
+import type { StatementAnalyzer } from './safety';
 
 /**
  * A live connection to a database. Obtained from {@link DatabaseDriver.connect}.
@@ -50,6 +51,14 @@ export interface DatabaseDriver {
   readonly capabilities: DriverCapabilities;
   /** Drives the dynamically-rendered "New connection" form. */
   readonly connectionFields: ConnectionField[];
+  /**
+   * How this driver's query text is split into statements and classified for
+   * the guardian rules (read-only enforcement, destructive confirmation).
+   * Omit it for SQL engines — the engine falls back to the SQL analyzer. A
+   * driver whose query language is not SQL MUST supply one, or its writes will
+   * read as `unknown` and slip past the read-only check.
+   */
+  readonly analyzer?: StatementAnalyzer;
 
   connect(config: ConnectionConfig, secrets: ConnectionSecrets): Promise<DriverConnection>;
   testConnection(

@@ -1,5 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, effect, inject } from '@angular/core';
 import type * as Monaco from 'monaco-editor';
+import type { QueryLanguage } from '@custos/shared';
 import { WorkspaceStore } from '../state/workspace.store';
 import { ThemeService } from '../theme.service';
 
@@ -12,8 +13,28 @@ const SQL_KEYWORDS = [
   'DESC', 'ASC', 'CAST', 'COALESCE', 'LEFT', 'RIGHT', 'INNER', 'OUTER',
 ];
 
-let providerRegistered = false;
+/** Collection methods offered by autocomplete on a MongoDB connection. */
+const MONGO_METHODS = [
+  'find', 'findOne', 'aggregate', 'countDocuments', 'estimatedDocumentCount', 'distinct',
+  'insertOne', 'insertMany', 'updateOne', 'updateMany', 'replaceOne', 'deleteOne', 'deleteMany',
+  'findOneAndUpdate', 'findOneAndDelete', 'bulkWrite', 'createIndex', 'getIndexes', 'drop',
+];
+/** Cursor-chain calls and the query/update operators worth completing. */
+const MONGO_CHAIN = ['sort', 'limit', 'skip', 'project', 'hint', 'collation', 'maxTimeMS'];
+const MONGO_OPERATORS = [
+  '$eq', '$ne', '$gt', '$gte', '$lt', '$lte', '$in', '$nin', '$and', '$or', '$not', '$nor',
+  '$exists', '$type', '$regex', '$expr', '$elemMatch', '$size', '$all',
+  '$set', '$unset', '$inc', '$push', '$pull', '$addToSet', '$rename', '$currentDate',
+  '$match', '$group', '$project', '$sort', '$limit', '$skip', '$unwind', '$lookup', '$count',
+  '$sum', '$avg', '$min', '$max', '$first', '$last',
+];
+
+/** The Monaco language id for each of Custos' query languages. */
+const MONACO_LANGUAGE: Record<QueryLanguage, string> = { sql: 'sql', mongodb: 'mongodb' };
+
+let providersRegistered = false;
 let themesDefined = false;
+let mongoLanguageRegistered = false;
 
 // Monaco needs a worker factory; we don't use worker-backed features (our
 // completion provider runs on the main thread), so a blank worker satisfies it.
@@ -71,6 +92,14 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
       this.theme.mode();
       this.monaco?.editor.setTheme(this.themeName());
     });
+    // Switching to a MongoDB connection switches the editor's language with it.
+    effect(() => {
+      const language = MONACO_LANGUAGE[this.ws.queryLanguage()];
+      const model = this.editor?.getModel();
+      if (this.monaco && model && model.getLanguageId() !== language) {
+        this.monaco.editor.setModelLanguage(model, language);
+      }
+    });
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -78,11 +107,12 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
     const monaco = await import('monaco-editor');
     this.monaco = monaco;
     this.defineThemes(monaco);
+    this.registerMongoLanguage(monaco);
     this.registerCompletions(monaco);
 
     this.editor = monaco.editor.create(this.hostRef.nativeElement, {
       value: this.ws.sql(),
-      language: 'sql',
+      language: MONACO_LANGUAGE[this.ws.queryLanguage()],
       theme: this.themeName(),
       automaticLayout: true,
       minimap: { enabled: false },
@@ -152,20 +182,86 @@ export class CodeEditorComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  /**
+   * MongoDB shell syntax as a Monaco language of its own. Monaco ships no
+   * MongoDB grammar, and reusing 'javascript' would drag in the TypeScript
+   * worker (which this editor deliberately does not run) — so this is a small
+   * Monarch grammar: JS literals, plus `$operators` highlighted as keywords,
+   * which is what a query actually reads as.
+   */
+  private registerMongoLanguage(monaco: typeof Monaco): void {
+    if (mongoLanguageRegistered) return;
+    mongoLanguageRegistered = true;
+    monaco.languages.register({ id: 'mongodb' });
+    monaco.languages.setLanguageConfiguration('mongodb', {
+      comments: { lineComment: '//', blockComment: ['/*', '*/'] },
+      brackets: [['{', '}'], ['[', ']'], ['(', ')']],
+      autoClosingPairs: [
+        { open: '{', close: '}' }, { open: '[', close: ']' }, { open: '(', close: ')' },
+        { open: '"', close: '"' }, { open: "'", close: "'" },
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('mongodb', {
+      keywords: ['db', 'use', 'show', 'true', 'false', 'null', 'new'],
+      constructors: ['ObjectId', 'ISODate', 'Date', 'NumberLong', 'NumberInt', 'NumberDecimal', 'UUID', 'BinData', 'Timestamp', 'MinKey', 'MaxKey'],
+      tokenizer: {
+        root: [
+          [/\/\/.*$/, 'comment'],
+          [/\/\*/, 'comment', '@comment'],
+          [/"(?:[^"\\]|\\.)*"/, 'string'],
+          [/'(?:[^'\\]|\\.)*'/, 'string'],
+          // A regex literal, but only where one can start (never after a value).
+          [/(?<=[([{,:=]|^)\s*\/(?:[^/\\\n]|\\.)+\/[a-z]*/, 'regexp'],
+          [/\$[A-Za-z][\w]*/, 'keyword'],
+          [/[A-Za-z_$][\w$]*/, { cases: { '@keywords': 'keyword', '@constructors': 'predefined', '@default': 'identifier' } }],
+          [/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/, 'number'],
+          [/[{}()[\]]/, '@brackets'],
+          [/[.,:;]/, 'delimiter'],
+        ],
+        comment: [
+          [/[^*]+/, 'comment'],
+          [/\*\//, 'comment', '@pop'],
+          [/./, 'comment'],
+        ],
+      },
+    });
+  }
+
   private registerCompletions(monaco: typeof Monaco): void {
-    if (providerRegistered) return;
-    providerRegistered = true;
+    if (providersRegistered) return;
+    providersRegistered = true;
     const ws = this.ws;
+    const rangeAt = (model: Monaco.editor.ITextModel, position: Monaco.Position) => {
+      const word = model.getWordUntilPosition(position);
+      return {
+        startLineNumber: position.lineNumber, endLineNumber: position.lineNumber,
+        startColumn: word.startColumn, endColumn: word.endColumn,
+      };
+    };
+
     monaco.languages.registerCompletionItemProvider('sql', {
       provideCompletionItems: (model, position) => {
-        const word = model.getWordUntilPosition(position);
-        const range = {
-          startLineNumber: position.lineNumber, endLineNumber: position.lineNumber,
-          startColumn: word.startColumn, endColumn: word.endColumn,
-        };
+        const range = rangeAt(model, position);
         const suggestions: Monaco.languages.CompletionItem[] = [
           ...SQL_KEYWORDS.map((k) => ({ label: k, kind: monaco.languages.CompletionItemKind.Keyword, insertText: k, range })),
           ...ws.tableNames().map((t) => ({ label: t, kind: monaco.languages.CompletionItemKind.Struct, insertText: t, detail: 'table', range })),
+        ];
+        return { suggestions };
+      },
+    });
+
+    // The MongoDB list is the same idea in that language: loaded collection
+    // names, the methods that can be called on one, and the `$operators`.
+    monaco.languages.registerCompletionItemProvider('mongodb', {
+      triggerCharacters: ['.', '$'],
+      provideCompletionItems: (model, position) => {
+        const range = rangeAt(model, position);
+        const kinds = monaco.languages.CompletionItemKind;
+        const suggestions: Monaco.languages.CompletionItem[] = [
+          ...ws.tableNames().map((t) => ({ label: t, kind: kinds.Struct, insertText: t, detail: 'collection', range })),
+          ...MONGO_METHODS.map((m) => ({ label: m, kind: kinds.Method, insertText: `${m}(`, detail: 'collection method', range })),
+          ...MONGO_CHAIN.map((m) => ({ label: m, kind: kinds.Method, insertText: `${m}(`, detail: 'cursor', range })),
+          ...MONGO_OPERATORS.map((o) => ({ label: o, kind: kinds.Operator, insertText: o, detail: 'operator', range })),
         ];
         return { suggestions };
       },

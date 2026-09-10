@@ -40,5 +40,5 @@ export class HttpBackend implements CustosApi {
   setActiveDatabase: CustosApi['setActiveDatabase'] = (id, db) => call('setActiveDatabase', [id, db]);
   runQuery: CustosApi['runQuery'] = (input) => call('runQuery', [input]);
   cancelQuery: CustosApi['cancelQuery'] = (id, queryId) => call('cancelQuery', [id, queryId]);
-  analyzeSql: CustosApi['analyzeSql'] = (sql) => call('analyzeSql', [sql]);
+  analyzeSql: CustosApi['analyzeSql'] = (sql, connectionId) => call('analyzeSql', [sql, connectionId]);
 }

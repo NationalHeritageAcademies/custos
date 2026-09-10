@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { WorkspaceStore, type TreeNode } from '../state/workspace.store';
+import { driverBadge } from '../driver-presentation';
 
 /**
  * The sidebar connection tree, rendered from {@link WorkspaceStore.visibleNodes}.
@@ -27,7 +28,7 @@ import { WorkspaceStore, type TreeNode } from '../state/workspace.store';
 
           @switch (node.kind) {
             @case ('connection') {
-              <span class="badge" [style.background]="engineColor(node.driverId)">{{ engineTag(node.driverId) }}</span>
+              <span class="badge" [style.background]="badge(node.driverId).color">{{ badge(node.driverId).label }}</span>
             }
             @case ('database') {
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="1.7"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6"/><path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg>
@@ -90,12 +91,7 @@ export class ConnectionTreeComponent {
   isActive(node: TreeNode): boolean {
     return node.kind === 'table' && this.ws.sql().includes(node.label);
   }
-  engineTag(driverId?: string): string {
-    return driverId === 'mysql' ? 'MY' : 'AZ';
-  }
-  engineColor(driverId?: string): string {
-    return driverId === 'mysql' ? '#C98A2E' : '#2E8FD9';
-  }
+  readonly badge = driverBadge;
 
   edit(event: Event, node: TreeNode): void {
     event.stopPropagation();

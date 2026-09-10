@@ -2,7 +2,7 @@
   "name": "custos-db",
   "version": "0.1.1",
   "private": true,
-  "description": "Custos \u2014 keeper of your queries. A lightweight, open-source desktop database client for Azure SQL, MySQL, and more.",
+  "description": "Custos \u2014 keeper of your queries. A lightweight, open-source desktop database client for Azure SQL, MySQL, MongoDB, and more.",
   "license": "MIT",
   "author": "Custos contributors",
   "homepage": "https://github.com/NationalHeritageAcademies/custos#readme",
@@ -22,10 +22,12 @@
     "angular",
     "mysql",
     "azure-sql",
-    "mssql"
+    "mssql",
+    "mongodb",
+    "nosql"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   },
   "workspaces": [
     "packages/*",
@@ -55,8 +57,10 @@
     "@custos/shared": "*",
     "@custos/driver-mysql": "*",
     "@custos/driver-azuresql": "*",
+    "@custos/driver-mongodb": "*",
     "mysql2": "^3.11.3",
-    "mssql": "^11.0.1"
+    "mssql": "^11.0.1",
+    "mongodb": "^7.6.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.5.0",

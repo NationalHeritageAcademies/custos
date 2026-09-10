@@ -1,0 +1,17 @@
+{
+  "name": "@custos/driver-mongodb",
+  "version": "0.0.0",
+  "description": "MongoDB driver for Custos.",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "pretest": "tsc -b",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@custos/core": "*",
+    "mongodb": "^7.6.0"
+  }
+}
